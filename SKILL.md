@@ -24,7 +24,7 @@ Configure your MCP host to run balzac-mcp with your API key:
 ```
 
 npm release: https://www.npmjs.com/package/balzac-mcp
-github: https://github.com/vincenzor/balzac-mcp
+github: https://github.com/hirebalzac/mcp
 api docs: https://developer.hirebalzac.ai
 official website: https://hirebalzac.ai
 
@@ -229,5 +229,5 @@ Typical polling interval: 5-10 seconds. Article writing takes 2-5 minutes.
 Agent skill (Claude Code, Cursor, OpenClaw, etc.):
 
 ```
-npx skills add vincenzor/balzac-mcp
+npx skills add hirebalzac/mcp
 ```

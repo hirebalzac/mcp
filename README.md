@@ -207,7 +207,7 @@ If your account doesn't have enough credits, the tool returns an error with the 
 
 ## See Also
 
-- [Balzac CLI](https://github.com/vincenzor/balzac-cli) -- Command-line interface
+- [Balzac CLI](https://github.com/hirebalzac/cli) -- Command-line interface
 - [API Documentation](https://developer.hirebalzac.ai) -- Full REST API reference
 
 ---

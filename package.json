@@ -1,0 +1,51 @@
+{
+  "name": "balzac-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for the Balzac AI content platform — give AI assistants native access to workspaces, keywords, articles, and more.",
+  "type": "module",
+  "bin": {
+    "balzac-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup",
+    "start": "node dist/index.js"
+  },
+  "keywords": [
+    "balzac",
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "seo",
+    "articles",
+    "content-marketing",
+    "cursor",
+    "claude",
+    "vscode"
+  ],
+  "author": "Balzac <hello@hirebalzac.ai>",
+  "license": "MIT",
+  "homepage": "https://developer.hirebalzac.ai",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vincenzor/balzac-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/vincenzor/balzac-mcp/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.4.0",
+    "typescript": "^5.7.3",
+    "@types/node": "^22.0.0"
+  }
+}

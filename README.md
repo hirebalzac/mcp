@@ -3,9 +3,9 @@
 [![npm version](https://img.shields.io/npm/v/balzac-mcp.svg)](https://www.npmjs.com/package/balzac-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
-**MCP server for the Balzac AI content platform** -- give AI assistants native access to workspaces, keywords, suggestions, articles, integrations, and more.
+**MCP server for the Balzac AI content platform** -- give AI agents native access to keyword research, article writing, and CMS publishing.
 
-The Balzac MCP server implements the [Model Context Protocol](https://modelcontextprotocol.io) so that AI hosts like Cursor, Claude Desktop, and VS Code Copilot can manage your Balzac account through structured tool calls instead of CLI commands.
+The Balzac MCP server implements the [Model Context Protocol](https://modelcontextprotocol.io) so that AI agents like Claude Desktop, OpenClaw, Claude Code, and any MCP-compatible client can manage your entire content pipeline through structured tool calls.
 
 ---
 
@@ -15,11 +15,9 @@ The Balzac MCP server implements the [Model Context Protocol](https://modelconte
 
 Log in to [Balzac](https://app.hirebalzac.ai), go to **Settings > API Keys**, and generate a key.
 
-### 2. Add to your AI host
+### 2. Configure your MCP client
 
-#### Cursor
-
-Add to `.cursor/mcp.json` in your project (or global settings):
+Add to your MCP configuration (Claude Desktop, OpenClaw, or any MCP-compatible host):
 
 ```json
 {
@@ -35,53 +33,17 @@ Add to `.cursor/mcp.json` in your project (or global settings):
 }
 ```
 
-#### Claude Desktop
-
-Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
-
-```json
-{
-  "mcpServers": {
-    "balzac": {
-      "command": "npx",
-      "args": ["-y", "balzac-mcp"],
-      "env": {
-        "BALZAC_API_KEY": "bz_your_api_key_here"
-      }
-    }
-  }
-}
-```
-
-#### VS Code
-
-Add to `.vscode/mcp.json`:
-
-```json
-{
-  "servers": {
-    "balzac": {
-      "command": "npx",
-      "args": ["-y", "balzac-mcp"],
-      "env": {
-        "BALZAC_API_KEY": "bz_your_api_key_here"
-      }
-    }
-  }
-}
-```
+For **Claude Desktop**, this file lives at `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows).
 
 ### 3. Start using it
 
-Once configured, your AI assistant can directly call Balzac tools. For example:
+Once configured, your AI agent can directly call Balzac tools:
 
-> "List my Balzac workspaces"
+> "Research keywords for my site and write an SEO article about the best opportunity"
 >
-> "Create a workspace for example.com"
+> "Write 3 articles about our top keywords and publish them as drafts to WordPress"
 >
-> "Write an article about content marketing strategy in my workspace"
->
-> "Publish my latest article to WordPress"
+> "Rewrite my latest article with a more professional tone"
 
 ---
 

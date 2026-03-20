@@ -95,15 +95,17 @@ export function registerArticleTools(server: McpServer) {
 
   server.tool(
     'regenerate_article_picture',
-    'Regenerate the main picture of an article. Costs 1 credit. Runs asynchronously.',
+    'Regenerate the main picture of an article. Costs 1 credit. Runs asynchronously. Supports three modes: title (title overlay with brand color), stock (stock photo), ai (AI-generated in a chosen style).',
     {
       workspace_id: z.string().describe('Workspace UUID'),
       article_id: z.string().describe('Article UUID'),
-      pictures_style: z.string().optional().describe('Override picture style'),
-      additional_instructions: z.string().optional().describe('Instructions for the image, e.g. "include a laptop"'),
+      picture_mode: z.string().optional().describe('Picture mode: title (title overlay), stock (stock photo), ai (AI generated). Falls back to workspace default if omitted.'),
+      pictures_style: z.string().optional().describe('Override picture style (for ai mode): stock-photo, photorealistic, anime, comic-book, cyber-punk, pixel-art, low-poly, line-art, isometric, origami, watercolor, flat-illustration, 3d-clay'),
+      additional_instructions: z.string().optional().describe('Instructions for AI-generated images, e.g. "include a laptop". Not used for title or stock modes.'),
     },
     async ({ workspace_id, article_id, ...params }) => {
       const body: Record<string, unknown> = {};
+      if (params.picture_mode) body.picture_mode = params.picture_mode;
       if (params.pictures_style) body.pictures_style = params.pictures_style;
       if (params.additional_instructions) body.additional_instructions = params.additional_instructions;
 

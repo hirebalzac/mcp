@@ -1,6 +1,6 @@
 {
   "name": "balzac-mcp",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "MCP server for the Balzac AI content platform — give AI assistants native access to workspaces, keywords, articles, and more.",
   "type": "module",
   "bin": {

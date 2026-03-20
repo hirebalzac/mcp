@@ -5,12 +5,10 @@ import { client } from '../client.js';
 export function registerKeywordTools(server: McpServer) {
   server.tool(
     'list_keywords',
-    'List keywords for a workspace. Keywords drive content suggestions. Filter by level (1=primary, 2=long-tail) or status (enabled/disabled).',
+    'List keywords for a workspace. Keywords represent topics and drive content suggestions. Filter by status (enabled/disabled).',
     {
       workspace_id: z.string().describe('Workspace UUID'),
-      level: z.string().optional().describe('Filter by level: 1 (primary) or 2 (long-tail)'),
       status: z.string().optional().describe('Filter: enabled or disabled'),
-      parent_id: z.string().optional().describe('Filter long-tail keywords by parent keyword ID'),
       page: z.number().optional().describe('Page number'),
       per_page: z.number().optional().describe('Results per page'),
     },
@@ -69,19 +67,6 @@ export function registerKeywordTools(server: McpServer) {
     async ({ workspace_id, keyword_id }) => {
       await client.post(`/workspaces/${workspace_id}/keywords/${keyword_id}/disable`);
       return { content: [{ type: 'text' as const, text: JSON.stringify({ disabled: true, keyword_id }) }] };
-    }
-  );
-
-  server.tool(
-    'generate_long_tail_keywords',
-    'Generate long-tail keyword variations from a primary keyword. This runs asynchronously -- check back shortly for results.',
-    {
-      workspace_id: z.string().describe('Workspace UUID'),
-      keyword_id: z.string().describe('Primary keyword UUID'),
-    },
-    async ({ workspace_id, keyword_id }) => {
-      await client.post(`/workspaces/${workspace_id}/keywords/${keyword_id}/generate_long_tail`);
-      return { content: [{ type: 'text' as const, text: JSON.stringify({ started: true, keyword_id, message: 'Long-tail generation started. List keywords with parent_id filter to see results.' }) }] };
     }
   );
 

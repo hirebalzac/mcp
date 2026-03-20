@@ -43,8 +43,6 @@ export function registerBriefingTools(server: McpServer) {
       language: z.string().optional().describe('Language code override'),
       focus_keywords: z.string().optional().describe('Focus keywords for the article'),
       briefing: z.string().optional().describe('Additional writing instructions'),
-      primary_keyword_id: z.string().optional().describe('Primary keyword UUID to associate'),
-      secondary_keyword_id: z.string().optional().describe('Secondary keyword UUID'),
       tone_of_voice_id: z.string().optional().describe('Tone of voice UUID'),
     },
     async ({ workspace_id, ...params }) => {
@@ -55,8 +53,6 @@ export function registerBriefingTools(server: McpServer) {
       if (params.language) body.language = params.language;
       if (params.focus_keywords) body.focus_keywords = params.focus_keywords;
       if (params.briefing) body.briefing = params.briefing;
-      if (params.primary_keyword_id) body.primary_keyword_id = params.primary_keyword_id;
-      if (params.secondary_keyword_id) body.secondary_keyword_id = params.secondary_keyword_id;
       if (params.tone_of_voice_id) body.tone_of_voice_id = params.tone_of_voice_id;
 
       const res = await client.post(`/workspaces/${workspace_id}/briefings`, { briefing: body });

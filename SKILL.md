@@ -42,7 +42,7 @@ official website: https://hirebalzac.ai
 ## Core Workflow
 
 1. **Create workspace** from a domain (Balzac auto-analyzes the site)
-2. **Manage keywords** (add, enable/disable, generate long-tail)
+2. **Manage keywords** (add, enable/disable)
 3. **Generate content** (generate suggestions, accept them, or create briefings)
 4. **Manage articles** (list, export, rewrite, publish to integrations)
 
@@ -64,12 +64,11 @@ official website: https://hirebalzac.ai
 
 | Tool | Parameters | Description |
 |------|-----------|-------------|
-| `list_keywords` | `workspace_id`, `level?`, `status?`, `parent_id?`, `page?`, `per_page?` | List keywords |
+| `list_keywords` | `workspace_id`, `status?`, `page?`, `per_page?` | List keywords |
 | `get_keyword` | `workspace_id`, `keyword_id` | Get keyword details |
 | `create_keyword` | `workspace_id`, `name` | Add a keyword |
 | `enable_keyword` | `workspace_id`, `keyword_id` | Enable keyword |
 | `disable_keyword` | `workspace_id`, `keyword_id` | Disable keyword |
-| `generate_long_tail_keywords` | `workspace_id`, `keyword_id` | Generate long-tail variations (async) |
 | `delete_keyword` | `workspace_id`, `keyword_id` | Delete keyword |
 
 ### Suggestions
@@ -78,7 +77,7 @@ official website: https://hirebalzac.ai
 |------|-----------|-------------|
 | `list_suggestions` | `workspace_id`, `status?`, `page?`, `per_page?` | List suggestions |
 | `get_suggestion` | `workspace_id`, `suggestion_id` | Get suggestion details |
-| `generate_suggestions` | `workspace_id` | Trigger AI suggestion generation (async) |
+| `generate_suggestions` | `workspace_id` | Generate 10 new suggestions (1 credit, async) |
 | `accept_suggestion` | `workspace_id`, `suggestion_id` | Accept and start writing (5 credits) |
 | `reject_suggestion` | `workspace_id`, `suggestion_id` | Reject suggestion |
 
@@ -88,7 +87,7 @@ official website: https://hirebalzac.ai
 |------|-----------|-------------|
 | `list_briefings` | `workspace_id`, `status?`, `page?`, `per_page?` | List briefings |
 | `get_briefing` | `workspace_id`, `briefing_id` | Get briefing details |
-| `create_briefing` | `workspace_id`, `topic`, `title?`, `type_of?`, `length?`, `language?`, `focus_keywords?`, `briefing?`, `primary_keyword_id?`, `secondary_keyword_id?`, `tone_of_voice_id?` | Create briefing and write article (5 credits) |
+| `create_briefing` | `workspace_id`, `topic`, `title?`, `type_of?`, `length?`, `language?`, `focus_keywords?`, `briefing?`, `tone_of_voice_id?` | Create briefing and write article (5 credits) |
 
 ### Articles
 
@@ -160,6 +159,7 @@ official website: https://hirebalzac.ai
 | Action | Credits |
 |--------|---------|
 | Write article (accept_suggestion / create_briefing) | 5 |
+| Generate 10 new suggestions | 1 |
 | Rewrite article | 3 |
 | Regenerate picture | 1 |
 
@@ -172,7 +172,6 @@ Insufficient credits returns an error with `required` and `available` counts.
 These tools start background jobs and return immediately:
 
 - `generate_suggestions` -- poll `list_suggestions` for new results
-- `generate_long_tail_keywords` -- poll `list_keywords` with `parent_id`
 - `create_briefing` / `accept_suggestion` -- poll `list_articles` or `get_article` for status
 - `rewrite_article` -- poll `get_article` for completion
 - `regenerate_article_picture` -- poll `get_article` for new `main_picture_url`

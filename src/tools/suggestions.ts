@@ -33,13 +33,13 @@ export function registerSuggestionTools(server: McpServer) {
 
   server.tool(
     'generate_suggestions',
-    'Trigger AI to generate new content suggestions based on the workspace keywords. Runs asynchronously.',
+    'Generate 10 new content suggestions based on the workspace keywords. Costs 1 credit. Runs asynchronously.',
     {
       workspace_id: z.string().describe('Workspace UUID'),
     },
     async ({ workspace_id }) => {
-      await client.post(`/workspaces/${workspace_id}/suggestions/generate`);
-      return { content: [{ type: 'text' as const, text: JSON.stringify({ started: true, message: 'Suggestion generation started. List suggestions to see new ones.' }) }] };
+      const res = await client.post(`/workspaces/${workspace_id}/suggestions/generate`);
+      return { content: [{ type: 'text' as const, text: JSON.stringify(res.data ?? { started: true, message: 'Generating 10 new suggestions. They will appear shortly.' }) }] };
     }
   );
 

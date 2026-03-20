@@ -72,12 +72,11 @@ Once configured, your AI agent can directly call Balzac tools:
 
 | Tool | Description |
 |------|-------------|
-| `list_keywords` | List keywords (filter by level, status) |
+| `list_keywords` | List keywords (filter by status) |
 | `get_keyword` | Get keyword details (volume, competition, intent) |
 | `create_keyword` | Add a keyword |
 | `enable_keyword` | Enable a keyword |
 | `disable_keyword` | Disable a keyword |
-| `generate_long_tail_keywords` | Generate long-tail variations |
 | `delete_keyword` | Delete a keyword |
 
 ### Suggestions
@@ -86,7 +85,7 @@ Once configured, your AI agent can directly call Balzac tools:
 |------|-------------|
 | `list_suggestions` | List content suggestions |
 | `get_suggestion` | Get suggestion details |
-| `generate_suggestions` | Trigger AI suggestion generation |
+| `generate_suggestions` | Generate 10 new suggestions (1 credit) |
 | `accept_suggestion` | Accept and start writing (5 credits) |
 | `reject_suggestion` | Reject a suggestion |
 
@@ -160,6 +159,7 @@ Once configured, your AI agent can directly call Balzac tools:
 | Action | Credits |
 |--------|---------|
 | Writing an article (accept suggestion or create briefing) | 5 |
+| Generating 10 new suggestions | 1 |
 | Rewriting an article | 3 |
 | Regenerating a picture | 1 |
 

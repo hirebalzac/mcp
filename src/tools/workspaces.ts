@@ -19,7 +19,7 @@ export function registerWorkspaceTools(server: McpServer) {
 
   server.tool(
     'get_workspace',
-    'Get full details of a specific workspace including name, domain, status, language, description, target audience, theme, pictures style, cover image mode (title_based_featured_image, brand_color, title_font), and article limits.',
+    'Get full details of a specific workspace including name, domain, status, language, description, target audience, theme, pictures style, cover image mode (title_based_featured_image, brand_color, title_font), article limits, and keyword usage limits (keywords_limit: used, max, remaining).',
     {
       workspace_id: z.string().describe('Workspace UUID'),
     },

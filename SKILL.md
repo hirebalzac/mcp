@@ -65,11 +65,12 @@ official website: https://hirebalzac.ai
 | Tool | Parameters | Description |
 |------|-----------|-------------|
 | `list_keywords` | `workspace_id`, `status?`, `page?`, `per_page?` | List keywords |
-| `get_keyword` | `workspace_id`, `keyword_id` | Get keyword details |
+| `get_keyword` | `workspace_id`, `keyword_id` | Get keyword details (incl. difficulty and GSC metrics) |
 | `create_keyword` | `workspace_id`, `name` | Add a keyword |
 | `enable_keyword` | `workspace_id`, `keyword_id` | Enable keyword |
 | `disable_keyword` | `workspace_id`, `keyword_id` | Disable keyword |
 | `delete_keyword` | `workspace_id`, `keyword_id` | Delete keyword |
+| `generate_keywords` | `workspace_id` | Generate new keywords with AI (async) |
 
 ### Suggestions
 
@@ -171,6 +172,7 @@ Insufficient credits returns an error with `required` and `available` counts.
 
 These tools start background jobs and return immediately:
 
+- `generate_keywords` -- poll `list_keywords` for new results
 - `generate_suggestions` -- poll `list_suggestions` for new results
 - `create_briefing` / `accept_suggestion` -- poll `list_articles` or `get_article` for status
 - `rewrite_article` -- poll `get_article` for completion

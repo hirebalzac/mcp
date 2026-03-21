@@ -20,7 +20,7 @@ export function registerKeywordTools(server: McpServer) {
 
   server.tool(
     'get_keyword',
-    'Get full details of a keyword including search volume, competition, CPC, and search intent.',
+    'Get full details of a keyword including search volume, competition, CPC, search intent, keyword difficulty, and Google Search Console metrics (clicks, impressions, CTR, position) if GSC is connected.',
     {
       workspace_id: z.string().describe('Workspace UUID'),
       keyword_id: z.string().describe('Keyword UUID'),
@@ -46,7 +46,7 @@ export function registerKeywordTools(server: McpServer) {
 
   server.tool(
     'enable_keyword',
-    'Enable a keyword so it can be used for content suggestions.',
+    'Enable a keyword so it can be used for content suggestions. Returns an error if the keyword limit for your plan is reached.',
     {
       workspace_id: z.string().describe('Workspace UUID'),
       keyword_id: z.string().describe('Keyword UUID'),
@@ -80,6 +80,18 @@ export function registerKeywordTools(server: McpServer) {
     async ({ workspace_id, keyword_id }) => {
       await client.del(`/workspaces/${workspace_id}/keywords/${keyword_id}`);
       return { content: [{ type: 'text' as const, text: JSON.stringify({ deleted: true, keyword_id }) }] };
+    }
+  );
+
+  server.tool(
+    'generate_keywords',
+    'Generate new keywords using AI based on the workspace context. Runs asynchronously — new keywords appear shortly. Returns an error if the keyword limit for your plan is reached.',
+    {
+      workspace_id: z.string().describe('Workspace UUID'),
+    },
+    async ({ workspace_id }) => {
+      const res = await client.post(`/workspaces/${workspace_id}/keywords/generate`);
+      return { content: [{ type: 'text' as const, text: JSON.stringify(res.data ?? { started: true, message: 'Generating new keywords. They will appear shortly.' }) }] };
     }
   );
 }

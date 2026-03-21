@@ -20,7 +20,7 @@ export function registerBriefingTools(server: McpServer) {
 
   server.tool(
     'get_briefing',
-    'Get full details of a briefing including topic, title, type, length, focus keywords, and instructions.',
+    'Get full details of a briefing including topic, title, type, length, focus keywords, instructions, and whether it was derived from Google Search Console insights (gsc_derived).',
     {
       workspace_id: z.string().describe('Workspace UUID'),
       briefing_id: z.string().describe('Briefing UUID'),

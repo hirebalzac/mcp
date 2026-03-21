@@ -20,7 +20,7 @@ export function registerSuggestionTools(server: McpServer) {
 
   server.tool(
     'get_suggestion',
-    'Get full details of a suggestion including topic, title, type, length, language, focus keywords, and description.',
+    'Get full details of a suggestion including topic, title, type, length, language, focus keywords, description, and whether it was derived from Google Search Console insights (gsc_derived).',
     {
       workspace_id: z.string().describe('Workspace UUID'),
       suggestion_id: z.string().describe('Suggestion UUID'),

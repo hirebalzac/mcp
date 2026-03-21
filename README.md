@@ -73,11 +73,12 @@ Once configured, your AI agent can directly call Balzac tools:
 | Tool | Description |
 |------|-------------|
 | `list_keywords` | List keywords (filter by status) |
-| `get_keyword` | Get keyword details (volume, competition, intent) |
+| `get_keyword` | Get keyword details (volume, competition, intent, difficulty, GSC metrics) |
 | `create_keyword` | Add a keyword |
 | `enable_keyword` | Enable a keyword |
 | `disable_keyword` | Disable a keyword |
 | `delete_keyword` | Delete a keyword |
+| `generate_keywords` | Generate new keywords with AI (async) |
 
 ### Suggestions
 

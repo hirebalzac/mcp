@@ -10,6 +10,7 @@ import { registerLinkTools } from './tools/links.js';
 import { registerSettingsTools } from './tools/settings.js';
 import { registerToneTools } from './tools/tones.js';
 import { registerIntegrationTools } from './tools/integrations.js';
+import { registerSearchConsoleTools } from './tools/search-console.js';
 
 const server = new McpServer({
   name: 'balzac',
@@ -26,6 +27,7 @@ registerLinkTools(server);
 registerSettingsTools(server);
 registerToneTools(server);
 registerIntegrationTools(server);
+registerSearchConsoleTools(server);
 
 const transport = new StdioServerTransport();
 await server.connect(transport);

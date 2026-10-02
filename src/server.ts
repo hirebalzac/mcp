@@ -1,5 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { BalzacClient } from './client.js';
+import type { ServerOptions } from './options.js';
 import { registerWorkspaceTools } from './tools/workspaces.js';
 import { registerKeywordTools } from './tools/keywords.js';
 import { registerSuggestionTools } from './tools/suggestions.js';
@@ -15,19 +16,19 @@ import { registerSearchConsoleTools } from './tools/search-console.js';
 const INSTRUCTIONS = `Balzac researches SEO keywords and writes and publishes blog articles for a website.
 Everything lives in a workspace (one per website), so start with list_workspaces to find the workspace_id.
 Typical flow: keywords, then suggestions (article ideas) to accept, or a briefing to write about a specific topic, then articles, then publishing to an integration (WordPress, Webflow, Wix, GoHighLevel, webhook).
-Some actions cost credits; each tool description says how many. Mention the cost before running paid actions the user didn't explicitly ask for.`;
+Some actions cost credits; each tool description says how many.`;
 
-export function createServer(client: BalzacClient): McpServer {
+export function createServer(client: BalzacClient, options: ServerOptions = { aiImages: true }): McpServer {
   const server = new McpServer({ name: 'balzac', version: '1.0.0' }, { instructions: INSTRUCTIONS });
 
-  registerWorkspaceTools(server, client);
+  registerWorkspaceTools(server, client, options);
   registerKeywordTools(server, client);
   registerSuggestionTools(server, client);
   registerBriefingTools(server, client);
-  registerArticleTools(server, client);
+  registerArticleTools(server, client, options);
   registerCompetitorTools(server, client);
   registerLinkTools(server, client);
-  registerSettingsTools(server, client);
+  registerSettingsTools(server, client, options);
   registerToneTools(server, client);
   registerIntegrationTools(server, client);
   registerSearchConsoleTools(server, client);

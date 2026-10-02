@@ -1,9 +1,10 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { BalzacClient } from '../client.js';
+import { picturesStyleParam, type ServerOptions } from '../options.js';
 import { readOnly, destructive } from '../annotations.js';
 
-export function registerSettingsTools(server: McpServer, client: BalzacClient) {
+export function registerSettingsTools(server: McpServer, client: BalzacClient, options: ServerOptions) {
   server.tool(
     'get_settings',
     'Get workspace settings including language, article length, pictures style, cover image mode (title_based_featured_image, brand_color, title_font), writing preferences, and content limits.',
@@ -19,12 +20,14 @@ export function registerSettingsTools(server: McpServer, client: BalzacClient) {
 
   server.tool(
     'update_settings',
-    'Update workspace settings: language, article length, pictures style, cover image mode (title overlay, stock photo, AI), tone, auto-accept suggestions, writing style preferences, and more.',
+    options.aiImages
+      ? 'Update workspace settings: language, article length, pictures style, cover image mode (title overlay, stock photo, AI), tone, auto-accept suggestions, writing style preferences, and more.'
+      : 'Update workspace settings: language, article length, cover image mode (title overlay or stock photo), tone, auto-accept suggestions, writing style preferences, and more.',
     {
       workspace_id: z.string().describe('Workspace UUID'),
       language: z.string().optional().describe('Language code, e.g. en, fr'),
       article_length: z.string().optional().describe('Default article length: short, normal, long, extra_long'),
-      pictures_style: z.string().optional().describe('Picture style: stock-photo, photorealistic, anime, comic-book, cyber-punk, pixel-art, low-poly, line-art, isometric, origami, watercolor, flat-illustration, 3d-clay'),
+      pictures_style: picturesStyleParam(options, 'Picture style: stock-photo, photorealistic, anime, comic-book, cyber-punk, pixel-art, low-poly, line-art, isometric, origami, watercolor, flat-illustration, 3d-clay'),
       title_based_featured_image: z.boolean().optional().describe('Enable title overlay mode for cover images. When true, articles get a title overlay image instead of the pictures_style.'),
       brand_color: z.string().optional().describe('Brand color hex code for title overlay images, e.g. #FF5500'),
       title_font: z.string().optional().describe('Font for title overlay images: montserrat, playfair, poppins, lora, oswald'),

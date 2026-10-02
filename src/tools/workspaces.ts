@@ -1,9 +1,10 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { BalzacClient } from '../client.js';
+import { picturesStyleParam, type ServerOptions } from '../options.js';
 import { readOnly, additive, destructive } from '../annotations.js';
 
-export function registerWorkspaceTools(server: McpServer, client: BalzacClient) {
+export function registerWorkspaceTools(server: McpServer, client: BalzacClient, options: ServerOptions) {
   server.tool(
     'list_workspaces',
     'List all workspaces in your Balzac account. Returns id, name, domain, status, and language for each workspace.',
@@ -42,7 +43,7 @@ export function registerWorkspaceTools(server: McpServer, client: BalzacClient) 
       language: z.string().optional().describe('Language code, e.g. en, fr, de'),
       auto_accept_keywords: z.boolean().optional().describe('Auto-accept discovered keywords (default true)'),
       auto_accept_suggestions: z.boolean().optional().describe('Auto-accept generated suggestions'),
-      pictures_style: z.string().optional().describe('Image style: stock-photo, photorealistic, anime, comic-book, cyber-punk, pixel-art, low-poly, line-art, isometric, origami, watercolor, flat-illustration, 3d-clay'),
+      pictures_style: picturesStyleParam(options, 'Image style: stock-photo, photorealistic, anime, comic-book, cyber-punk, pixel-art, low-poly, line-art, isometric, origami, watercolor, flat-illustration, 3d-clay'),
       title_based_featured_image: z.boolean().optional().describe('Enable title overlay mode for cover images'),
       brand_color: z.string().optional().describe('Brand color hex code for title overlay, e.g. #FF5500'),
       title_font: z.string().optional().describe('Font for title overlay: montserrat, playfair, poppins, lora, oswald'),
@@ -77,7 +78,7 @@ export function registerWorkspaceTools(server: McpServer, client: BalzacClient) 
       name: z.string().optional().describe('New name'),
       description: z.string().optional().describe('New description'),
       language: z.string().optional().describe('Language code'),
-      pictures_style: z.string().optional().describe('Image style: stock-photo, photorealistic, anime, comic-book, cyber-punk, pixel-art, low-poly, line-art, isometric, origami, watercolor, flat-illustration, 3d-clay'),
+      pictures_style: picturesStyleParam(options, 'Image style: stock-photo, photorealistic, anime, comic-book, cyber-punk, pixel-art, low-poly, line-art, isometric, origami, watercolor, flat-illustration, 3d-clay'),
       title_based_featured_image: z.boolean().optional().describe('Enable title overlay mode for cover images'),
       brand_color: z.string().optional().describe('Brand color hex code for title overlay, e.g. #FF5500'),
       title_font: z.string().optional().describe('Font for title overlay: montserrat, playfair, poppins, lora, oswald'),

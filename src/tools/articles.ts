@@ -1,9 +1,10 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { BalzacClient } from '../client.js';
+import type { ServerOptions } from '../options.js';
 import { readOnly, additive, destructive } from '../annotations.js';
 
-export function registerArticleTools(server: McpServer, client: BalzacClient) {
+export function registerArticleTools(server: McpServer, client: BalzacClient, options: ServerOptions) {
   server.tool(
     'list_articles',
     'List articles for a workspace. Filter by status (waiting, in_progress, done) or published state.',
@@ -99,18 +100,28 @@ export function registerArticleTools(server: McpServer, client: BalzacClient) {
     }
   );
 
+  // Without AI images the mode is required: left out, it would fall back to
+  // the workspace's default, which can be AI.
   server.tool(
     'regenerate_article_picture',
-    'Regenerate the main picture of an article. Costs 1 credit. Runs asynchronously. Supports three modes: title (title overlay with brand color), stock (stock photo), ai (AI-generated in a chosen style).',
-    {
-      workspace_id: z.string().describe('Workspace UUID'),
-      article_id: z.string().describe('Article UUID'),
-      picture_mode: z.string().optional().describe('Picture mode: title (title overlay), stock (stock photo), ai (AI generated). Falls back to workspace default if omitted.'),
-      pictures_style: z.string().optional().describe('Override picture style (for ai mode): stock-photo, photorealistic, anime, comic-book, cyber-punk, pixel-art, low-poly, line-art, isometric, origami, watercolor, flat-illustration, 3d-clay'),
-      additional_instructions: z.string().optional().describe('Instructions for AI-generated images, e.g. "include a laptop". Not used for title or stock modes.'),
-    },
+    options.aiImages
+      ? 'Regenerate the main picture of an article. Costs 1 credit. Runs asynchronously. Supports three modes: title (title overlay with brand color), stock (stock photo), ai (AI-generated in a chosen style).'
+      : 'Regenerate the main picture of an article. Costs 1 credit. Runs asynchronously. Two modes: title (title overlay with brand color) or stock (stock photo).',
+    options.aiImages
+      ? {
+          workspace_id: z.string().describe('Workspace UUID'),
+          article_id: z.string().describe('Article UUID'),
+          picture_mode: z.string().optional().describe('Picture mode: title (title overlay), stock (stock photo), ai (AI generated). Falls back to workspace default if omitted.'),
+          pictures_style: z.string().optional().describe('Override picture style (for ai mode): stock-photo, photorealistic, anime, comic-book, cyber-punk, pixel-art, low-poly, line-art, isometric, origami, watercolor, flat-illustration, 3d-clay'),
+          additional_instructions: z.string().optional().describe('Instructions for AI-generated images, e.g. "include a laptop". Not used for title or stock modes.'),
+        }
+      : {
+          workspace_id: z.string().describe('Workspace UUID'),
+          article_id: z.string().describe('Article UUID'),
+          picture_mode: z.enum(['title', 'stock']).describe('Picture mode: title (title overlay with brand color) or stock (stock photo)'),
+        },
     destructive('Regenerate article picture'),
-    async ({ workspace_id, article_id, ...params }) => {
+    async ({ workspace_id, article_id, ...params }: Record<string, string | undefined>) => {
       const body: Record<string, unknown> = {};
       if (params.picture_mode) body.picture_mode = params.picture_mode;
       if (params.pictures_style) body.pictures_style = params.pictures_style;

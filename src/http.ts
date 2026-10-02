@@ -92,7 +92,8 @@ async function handleMcpRequest(req: Request, res: Response) {
   const label = message?.method === 'tools/call' ? `tools/call ${message.params?.name}` : message?.method;
   res.on('finish', () => console.log(`${req.method} ${req.path} ${label ?? '-'} ${res.statusCode} ${Date.now() - started}ms`));
 
-  const server = createServer(new BalzacClient(res.locals.token, API_URL));
+  // No AI image generation on the connector: the Claude directory doesn't accept it.
+  const server = createServer(new BalzacClient(res.locals.token, API_URL), { aiImages: false });
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
   res.on('close', () => {
     transport.close();

@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { client } from '../client.js';
+import type { BalzacClient } from '../client.js';
 
-export function registerSuggestionTools(server: McpServer) {
+export function registerSuggestionTools(server: McpServer, client: BalzacClient) {
   server.tool(
     'list_suggestions',
     'List content suggestions for a workspace. Suggestions are AI-generated article ideas based on keywords. Filter by status: proposed, accepted, rejected.',

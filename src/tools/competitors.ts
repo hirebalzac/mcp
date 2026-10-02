@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { client } from '../client.js';
+import type { BalzacClient } from '../client.js';
 
-export function registerCompetitorTools(server: McpServer) {
+export function registerCompetitorTools(server: McpServer, client: BalzacClient) {
   server.tool(
     'list_competitors',
     'List competitor domains for a workspace. Competitors are analyzed to inform content strategy.',

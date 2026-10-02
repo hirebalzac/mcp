@@ -1,20 +1,20 @@
-const BASE_URL = process.env.BALZAC_API_URL || 'https://api.hirebalzac.ai/v1';
-
-function getApiKey(): string {
-  const key = process.env.BALZAC_API_KEY || '';
-  if (!key) {
-    throw new Error('BALZAC_API_KEY environment variable is required.');
-  }
-  return key;
-}
+export const DEFAULT_API_URL = 'https://api.hirebalzac.ai/v1';
 
 interface ApiResponse<T = unknown> {
   status: number;
   data: T;
 }
 
-class BalzacClient {
+// Calls the Balzac API with one set of credentials: the BALZAC_API_KEY of a
+// local stdio server, or the bearer token of a remote MCP request (an OAuth
+// access token or an API key).
+export class BalzacClient {
   private maxRetries = 3;
+
+  constructor(
+    private token: string,
+    private baseUrl: string = DEFAULT_API_URL
+  ) {}
 
   private async request<T = unknown>(
     method: string,
@@ -23,15 +23,19 @@ class BalzacClient {
     query?: Record<string, string | number | undefined>,
     attempt = 1
   ): Promise<ApiResponse<T>> {
-    const url = new URL(`${BASE_URL}${path}`);
+    const url = new URL(`${this.baseUrl}${path}`);
     if (query) {
       for (const [k, v] of Object.entries(query)) {
         if (v !== undefined && v !== '') url.searchParams.set(k, String(v));
       }
     }
 
+    if (!this.token) {
+      throw new Error('BALZAC_API_KEY environment variable is required.');
+    }
+
     const headers: Record<string, string> = {
-      Authorization: `Bearer ${getApiKey()}`,
+      Authorization: `Bearer ${this.token}`,
       Accept: 'application/json',
     };
     if (body) headers['Content-Type'] = 'application/json';
@@ -81,5 +85,3 @@ class BalzacClient {
     return this.request<T>('DELETE', path, undefined, query);
   }
 }
-
-export const client = new BalzacClient();

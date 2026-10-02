@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { client } from '../client.js';
+import type { BalzacClient } from '../client.js';
 
-export function registerWorkspaceTools(server: McpServer) {
+export function registerWorkspaceTools(server: McpServer, client: BalzacClient) {
   server.tool(
     'list_workspaces',
     'List all workspaces in your Balzac account. Returns id, name, domain, status, and language for each workspace.',

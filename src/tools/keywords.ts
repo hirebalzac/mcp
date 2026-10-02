@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { client } from '../client.js';
+import type { BalzacClient } from '../client.js';
 
-export function registerKeywordTools(server: McpServer) {
+export function registerKeywordTools(server: McpServer, client: BalzacClient) {
   server.tool(
     'list_keywords',
     'List keywords for a workspace. Keywords represent topics and drive content suggestions. Filter by status (enabled/disabled).',

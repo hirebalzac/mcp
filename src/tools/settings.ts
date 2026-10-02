@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { client } from '../client.js';
+import type { BalzacClient } from '../client.js';
 
-export function registerSettingsTools(server: McpServer) {
+export function registerSettingsTools(server: McpServer, client: BalzacClient) {
   server.tool(
     'get_settings',
     'Get workspace settings including language, article length, pictures style, cover image mode (title_based_featured_image, brand_color, title_font), writing preferences, and content limits.',

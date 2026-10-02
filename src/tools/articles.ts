@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { client } from '../client.js';
+import type { BalzacClient } from '../client.js';
 
-export function registerArticleTools(server: McpServer) {
+export function registerArticleTools(server: McpServer, client: BalzacClient) {
   server.tool(
     'list_articles',
     'List articles for a workspace. Filter by status (waiting, in_progress, done) or published state.',

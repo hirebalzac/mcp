@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { client } from '../client.js';
+import type { BalzacClient } from '../client.js';
 
-export function registerSearchConsoleTools(server: McpServer) {
+export function registerSearchConsoleTools(server: McpServer, client: BalzacClient) {
   server.tool(
     'search_console_overview',
     'Get Google Search Console performance overview for a workspace. Returns aggregate metrics (clicks, impressions, CTR, position) for the specified period with comparison to the previous period. Requires an active GSC integration.',

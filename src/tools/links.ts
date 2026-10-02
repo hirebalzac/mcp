@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { client } from '../client.js';
+import type { BalzacClient } from '../client.js';
 
-export function registerLinkTools(server: McpServer) {
+export function registerLinkTools(server: McpServer, client: BalzacClient) {
   server.tool(
     'list_links',
     'List reference links for a workspace. Balzac weaves these into articles for better internal and external linking.',

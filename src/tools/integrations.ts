@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { client } from '../client.js';
+import type { BalzacClient } from '../client.js';
 
-export function registerIntegrationTools(server: McpServer) {
+export function registerIntegrationTools(server: McpServer, client: BalzacClient) {
   server.tool(
     'list_integrations',
     'List publishing integrations for a workspace. Integrations connect to WordPress, Webflow, Wix, GoHighLevel, or Webhook endpoints.',

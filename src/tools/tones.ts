@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { client } from '../client.js';
+import type { BalzacClient } from '../client.js';
 
-export function registerToneTools(server: McpServer) {
+export function registerToneTools(server: McpServer, client: BalzacClient) {
   server.tool(
     'list_tones',
     'List all available tones of voice that can be applied to workspaces and articles.',

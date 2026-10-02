@@ -9,6 +9,24 @@ The Balzac MCP server implements the [Model Context Protocol](https://modelconte
 
 ---
 
+## Remote server (Claude, ChatGPT, and other connectors)
+
+Balzac is also available as a hosted MCP server, with nothing to install:
+
+```
+https://mcp.hirebalzac.ai/mcp
+```
+
+- **Claude** (claude.ai, Desktop, mobile): **Settings > Connectors > Add custom connector**, paste the URL, then sign in to Balzac and allow access.
+- **ChatGPT**: turn on developer mode under **Settings > Apps & Connectors > Advanced settings**, create a connector with the URL and OAuth authentication, then sign in to Balzac.
+- **Claude Code**: `claude mcp add --transport http balzac https://mcp.hirebalzac.ai/mcp`, then run `/mcp` to sign in.
+
+Clients that can't do OAuth can send an API key instead, as an `Authorization: Bearer bz_...` header. You can disconnect apps at any time from your Balzac profile page.
+
+The local server below works the same way, using an API key.
+
+---
+
 ## Quick Start
 
 ### 1. Get your API key
@@ -53,6 +71,15 @@ Once configured, your AI agent can directly call Balzac tools:
 |----------|----------|-------------|
 | `BALZAC_API_KEY` | Yes | Your Balzac API key (starts with `bz_`) |
 | `BALZAC_API_URL` | No | API base URL (default: `https://api.hirebalzac.ai/v1`) |
+
+The remote server (`npm run start:http`, deployed from the `Dockerfile`) takes its credentials from each request instead of `BALZAC_API_KEY`, and reads:
+
+| Variable | Description |
+|----------|-------------|
+| `MCP_PUBLIC_URL` | Public URL of the server (`https://mcp.hirebalzac.ai` in production) |
+| `BALZAC_AUTH_URL` | OAuth authorization server (default: `https://app.hirebalzac.ai`) |
+| `BALZAC_API_URL` | API base URL (default: `https://api.hirebalzac.ai/v1`) |
+| `PORT` | Port to listen on (default: `3001`) |
 
 ---
 

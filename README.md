@@ -14,12 +14,12 @@ The Balzac MCP server implements the [Model Context Protocol](https://modelconte
 Balzac is also available as a hosted MCP server, with nothing to install:
 
 ```
-https://mcp.hirebalzac.ai/mcp
+https://mcp.hirebalzac.ai
 ```
 
 - **Claude** (claude.ai, Desktop, mobile): **Settings > Connectors > Add custom connector**, paste the URL, then sign in to Balzac and allow access.
 - **ChatGPT**: turn on developer mode under **Settings > Apps & Connectors > Advanced settings**, create a connector with the URL and OAuth authentication, then sign in to Balzac.
-- **Claude Code**: `claude mcp add --transport http balzac https://mcp.hirebalzac.ai/mcp`, then run `/mcp` to sign in.
+- **Claude Code**: `claude mcp add --transport http balzac https://mcp.hirebalzac.ai`, then run `/mcp` to sign in.
 
 Clients that can't do OAuth can send an API key instead, as an `Authorization: Bearer bz_...` header. You can disconnect apps at any time from your Balzac profile page.
 

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { BalzacClient } from '../client.js';
+import { readOnly, additive, destructive } from '../annotations.js';
 
 export function registerWorkspaceTools(server: McpServer, client: BalzacClient) {
   server.tool(
@@ -11,6 +12,7 @@ export function registerWorkspaceTools(server: McpServer, client: BalzacClient) 
       page: z.number().optional().describe('Page number (default 1)'),
       per_page: z.number().optional().describe('Results per page (default 25)'),
     },
+    readOnly('List workspaces'),
     async ({ status, page, per_page }) => {
       const res = await client.get('/workspaces', { status, page, per_page });
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data) }] };
@@ -23,6 +25,7 @@ export function registerWorkspaceTools(server: McpServer, client: BalzacClient) 
     {
       workspace_id: z.string().describe('Workspace UUID'),
     },
+    readOnly('Get workspace'),
     async ({ workspace_id }) => {
       const res = await client.get(`/workspaces/${workspace_id}`);
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data) }] };
@@ -46,6 +49,7 @@ export function registerWorkspaceTools(server: McpServer, client: BalzacClient) 
       max_articles_per_period: z.number().optional().describe('Max articles per period'),
       max_articles_period: z.string().optional().describe('Period: day, week, or month'),
     },
+    additive('Create workspace', { openWorld: true }),
     async (params) => {
       const body: Record<string, unknown> = { domain: params.domain };
       if (params.name) body.name = params.name;
@@ -80,6 +84,7 @@ export function registerWorkspaceTools(server: McpServer, client: BalzacClient) 
       max_articles_per_period: z.number().optional().describe('Max articles per period'),
       max_articles_period: z.string().optional().describe('Period: day, week, or month'),
     },
+    destructive('Update workspace', { idempotent: true }),
     async ({ workspace_id, ...params }) => {
       const body: Record<string, unknown> = {};
       if (params.name) body.name = params.name;
@@ -103,6 +108,7 @@ export function registerWorkspaceTools(server: McpServer, client: BalzacClient) 
     {
       workspace_id: z.string().describe('Workspace UUID'),
     },
+    destructive('Delete workspace', { idempotent: true }),
     async ({ workspace_id }) => {
       await client.del(`/workspaces/${workspace_id}`);
       return { content: [{ type: 'text' as const, text: JSON.stringify({ deleted: true, workspace_id }) }] };

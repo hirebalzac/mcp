@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { BalzacClient } from '../client.js';
+import { readOnly, additive, destructive } from '../annotations.js';
 
 export function registerCompetitorTools(server: McpServer, client: BalzacClient) {
   server.tool(
@@ -11,6 +12,7 @@ export function registerCompetitorTools(server: McpServer, client: BalzacClient)
       page: z.number().optional().describe('Page number'),
       per_page: z.number().optional().describe('Results per page'),
     },
+    readOnly('List competitors'),
     async ({ workspace_id, ...q }) => {
       const res = await client.get(`/workspaces/${workspace_id}/competitors`, q);
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data) }] };
@@ -25,6 +27,7 @@ export function registerCompetitorTools(server: McpServer, client: BalzacClient)
       name: z.string().describe('Competitor name'),
       domain: z.string().describe('Competitor domain URL, e.g. https://competitor.com'),
     },
+    additive('Add competitor'),
     async ({ workspace_id, name, domain }) => {
       const res = await client.post(`/workspaces/${workspace_id}/competitors`, { competitor: { name, domain } });
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data) }] };
@@ -38,6 +41,7 @@ export function registerCompetitorTools(server: McpServer, client: BalzacClient)
       workspace_id: z.string().describe('Workspace UUID'),
       competitor_id: z.string().describe('Competitor UUID'),
     },
+    destructive('Delete competitor', { idempotent: true }),
     async ({ workspace_id, competitor_id }) => {
       await client.del(`/workspaces/${workspace_id}/competitors/${competitor_id}`);
       return { content: [{ type: 'text' as const, text: JSON.stringify({ deleted: true, competitor_id }) }] };

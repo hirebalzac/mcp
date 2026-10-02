@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { BalzacClient } from '../client.js';
+import { readOnly, additive, destructive } from '../annotations.js';
 
 export function registerIntegrationTools(server: McpServer, client: BalzacClient) {
   server.tool(
@@ -11,6 +12,7 @@ export function registerIntegrationTools(server: McpServer, client: BalzacClient
       page: z.number().optional().describe('Page number'),
       per_page: z.number().optional().describe('Results per page'),
     },
+    readOnly('List integrations'),
     async ({ workspace_id, ...q }) => {
       const res = await client.get(`/workspaces/${workspace_id}/integrations`, q);
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data) }] };
@@ -24,6 +26,7 @@ export function registerIntegrationTools(server: McpServer, client: BalzacClient
       workspace_id: z.string().describe('Workspace UUID'),
       integration_id: z.string().describe('Integration UUID'),
     },
+    readOnly('Get integration'),
     async ({ workspace_id, integration_id }) => {
       const res = await client.get(`/workspaces/${workspace_id}/integrations/${integration_id}`);
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data) }] };
@@ -57,6 +60,7 @@ export function registerIntegrationTools(server: McpServer, client: BalzacClient
       webhook_url: z.string().optional().describe('[webhook] URL to receive POST requests'),
       webhook_bearer_token: z.string().optional().describe('[webhook] Bearer token for authentication'),
     },
+    additive('Connect integration', { openWorld: true }),
     async ({ workspace_id, ...params }) => {
       const body: Record<string, unknown> = {
         service: params.service,
@@ -109,6 +113,7 @@ export function registerIntegrationTools(server: McpServer, client: BalzacClient
       webhook_url: z.string().optional().describe('[webhook] URL'),
       webhook_bearer_token: z.string().optional().describe('[webhook] Bearer token'),
     },
+    destructive('Update integration', { idempotent: true, openWorld: true }),
     async ({ workspace_id, integration_id, ...params }) => {
       const body: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(params)) {
@@ -127,6 +132,7 @@ export function registerIntegrationTools(server: McpServer, client: BalzacClient
       workspace_id: z.string().describe('Workspace UUID'),
       integration_id: z.string().describe('Integration UUID'),
     },
+    destructive('Delete integration', { idempotent: true }),
     async ({ workspace_id, integration_id }) => {
       await client.del(`/workspaces/${workspace_id}/integrations/${integration_id}`);
       return { content: [{ type: 'text' as const, text: JSON.stringify({ deleted: true, integration_id }) }] };
@@ -140,6 +146,7 @@ export function registerIntegrationTools(server: McpServer, client: BalzacClient
       workspace_id: z.string().describe('Workspace UUID'),
       integration_id: z.string().describe('Integration UUID'),
     },
+    additive('Reconnect integration', { idempotent: true, openWorld: true }),
     async ({ workspace_id, integration_id }) => {
       const res = await client.post(`/workspaces/${workspace_id}/integrations/${integration_id}/reconnect`, {});
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data) }] };

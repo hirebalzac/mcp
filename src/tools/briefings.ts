@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { BalzacClient } from '../client.js';
+import { readOnly, additive } from '../annotations.js';
 
 export function registerBriefingTools(server: McpServer, client: BalzacClient) {
   server.tool(
@@ -12,6 +13,7 @@ export function registerBriefingTools(server: McpServer, client: BalzacClient) {
       page: z.number().optional().describe('Page number'),
       per_page: z.number().optional().describe('Results per page'),
     },
+    readOnly('List briefings'),
     async ({ workspace_id, ...q }) => {
       const res = await client.get(`/workspaces/${workspace_id}/briefings`, q);
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data) }] };
@@ -25,6 +27,7 @@ export function registerBriefingTools(server: McpServer, client: BalzacClient) {
       workspace_id: z.string().describe('Workspace UUID'),
       briefing_id: z.string().describe('Briefing UUID'),
     },
+    readOnly('Get briefing'),
     async ({ workspace_id, briefing_id }) => {
       const res = await client.get(`/workspaces/${workspace_id}/briefings/${briefing_id}`);
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data) }] };
@@ -46,6 +49,7 @@ export function registerBriefingTools(server: McpServer, client: BalzacClient) {
       tone_of_voice_id: z.string().optional().describe('Tone of voice UUID'),
       start_writing: z.boolean().optional().default(true).describe('Start writing immediately (default true). Set false to queue for later writing.'),
     },
+    additive('Create briefing'),
     async ({ workspace_id, start_writing, ...params }) => {
       const body: Record<string, unknown> = { topic: params.topic };
       if (params.title) body.title = params.title;

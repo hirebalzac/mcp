@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { BalzacClient } from '../client.js';
+import { readOnly, destructive } from '../annotations.js';
 
 export function registerSettingsTools(server: McpServer, client: BalzacClient) {
   server.tool(
@@ -9,6 +10,7 @@ export function registerSettingsTools(server: McpServer, client: BalzacClient) {
     {
       workspace_id: z.string().describe('Workspace UUID'),
     },
+    readOnly('Get settings'),
     async ({ workspace_id }) => {
       const res = await client.get(`/workspaces/${workspace_id}/settings`);
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data) }] };
@@ -34,6 +36,7 @@ export function registerSettingsTools(server: McpServer, client: BalzacClient) {
       prefer_active_voice: z.boolean().optional().describe('Prefer active voice in articles'),
       write_in_first_person: z.boolean().optional().describe('Write articles in first person'),
     },
+    destructive('Update settings', { idempotent: true }),
     async ({ workspace_id, ...params }) => {
       const body: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(params)) {

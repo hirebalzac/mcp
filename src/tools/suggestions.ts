@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { BalzacClient } from '../client.js';
+import { readOnly, additive } from '../annotations.js';
 
 export function registerSuggestionTools(server: McpServer, client: BalzacClient) {
   server.tool(
@@ -12,6 +13,7 @@ export function registerSuggestionTools(server: McpServer, client: BalzacClient)
       page: z.number().optional().describe('Page number'),
       per_page: z.number().optional().describe('Results per page'),
     },
+    readOnly('List suggestions'),
     async ({ workspace_id, ...q }) => {
       const res = await client.get(`/workspaces/${workspace_id}/suggestions`, q);
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data) }] };
@@ -25,6 +27,7 @@ export function registerSuggestionTools(server: McpServer, client: BalzacClient)
       workspace_id: z.string().describe('Workspace UUID'),
       suggestion_id: z.string().describe('Suggestion UUID'),
     },
+    readOnly('Get suggestion'),
     async ({ workspace_id, suggestion_id }) => {
       const res = await client.get(`/workspaces/${workspace_id}/suggestions/${suggestion_id}`);
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data) }] };
@@ -37,6 +40,7 @@ export function registerSuggestionTools(server: McpServer, client: BalzacClient)
     {
       workspace_id: z.string().describe('Workspace UUID'),
     },
+    additive('Generate suggestions'),
     async ({ workspace_id }) => {
       const res = await client.post(`/workspaces/${workspace_id}/suggestions/generate`);
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data ?? { started: true, message: 'Generating 10 new suggestions. They will appear shortly.' }) }] };
@@ -50,6 +54,7 @@ export function registerSuggestionTools(server: McpServer, client: BalzacClient)
       workspace_id: z.string().describe('Workspace UUID'),
       suggestion_id: z.string().describe('Suggestion UUID'),
     },
+    additive('Accept suggestion'),
     async ({ workspace_id, suggestion_id }) => {
       const res = await client.post(`/workspaces/${workspace_id}/suggestions/${suggestion_id}/accept`);
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data) }] };
@@ -63,6 +68,7 @@ export function registerSuggestionTools(server: McpServer, client: BalzacClient)
       workspace_id: z.string().describe('Workspace UUID'),
       suggestion_id: z.string().describe('Suggestion UUID'),
     },
+    additive('Reject suggestion', { idempotent: true }),
     async ({ workspace_id, suggestion_id }) => {
       const res = await client.post(`/workspaces/${workspace_id}/suggestions/${suggestion_id}/reject`);
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data) }] };

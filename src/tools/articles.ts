@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { BalzacClient } from '../client.js';
+import { readOnly, additive, destructive } from '../annotations.js';
 
 export function registerArticleTools(server: McpServer, client: BalzacClient) {
   server.tool(
@@ -13,6 +14,7 @@ export function registerArticleTools(server: McpServer, client: BalzacClient) {
       page: z.number().optional().describe('Page number'),
       per_page: z.number().optional().describe('Results per page'),
     },
+    readOnly('List articles'),
     async ({ workspace_id, ...q }) => {
       const res = await client.get(`/workspaces/${workspace_id}/articles`, q);
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data) }] };
@@ -26,6 +28,7 @@ export function registerArticleTools(server: McpServer, client: BalzacClient) {
       workspace_id: z.string().describe('Workspace UUID'),
       article_id: z.string().describe('Article UUID'),
     },
+    readOnly('Get article'),
     async ({ workspace_id, article_id }) => {
       const res = await client.get(`/workspaces/${workspace_id}/articles/${article_id}`);
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data) }] };
@@ -44,6 +47,7 @@ export function registerArticleTools(server: McpServer, client: BalzacClient) {
       language: z.string().optional().describe('Language code'),
       tone_of_voice_id: z.string().optional().describe('Tone of voice UUID'),
     },
+    destructive('Update article', { idempotent: true }),
     async ({ workspace_id, article_id, ...params }) => {
       const body: Record<string, unknown> = {};
       if (params.title) body.title = params.title;
@@ -64,6 +68,7 @@ export function registerArticleTools(server: McpServer, client: BalzacClient) {
       workspace_id: z.string().describe('Workspace UUID'),
       article_id: z.string().describe('Article UUID'),
     },
+    destructive('Delete article', { idempotent: true }),
     async ({ workspace_id, article_id }) => {
       await client.del(`/workspaces/${workspace_id}/articles/${article_id}`);
       return { content: [{ type: 'text' as const, text: JSON.stringify({ deleted: true, article_id }) }] };
@@ -81,6 +86,7 @@ export function registerArticleTools(server: McpServer, client: BalzacClient) {
       tone_of_voice_id: z.string().optional().describe('Tone of voice UUID'),
       additional_instructions: z.string().optional().describe('Instructions for the rewrite, e.g. "make it more technical"'),
     },
+    destructive('Rewrite article'),
     async ({ workspace_id, article_id, ...params }) => {
       const body: Record<string, unknown> = {};
       if (params.length) body.length = params.length;
@@ -103,6 +109,7 @@ export function registerArticleTools(server: McpServer, client: BalzacClient) {
       pictures_style: z.string().optional().describe('Override picture style (for ai mode): stock-photo, photorealistic, anime, comic-book, cyber-punk, pixel-art, low-poly, line-art, isometric, origami, watercolor, flat-illustration, 3d-clay'),
       additional_instructions: z.string().optional().describe('Instructions for AI-generated images, e.g. "include a laptop". Not used for title or stock modes.'),
     },
+    destructive('Regenerate article picture'),
     async ({ workspace_id, article_id, ...params }) => {
       const body: Record<string, unknown> = {};
       if (params.picture_mode) body.picture_mode = params.picture_mode;
@@ -122,6 +129,7 @@ export function registerArticleTools(server: McpServer, client: BalzacClient) {
       article_id: z.string().describe('Article UUID'),
       integration_id: z.string().describe('Integration UUID to publish to'),
     },
+    additive('Publish article', { openWorld: true }),
     async ({ workspace_id, article_id, integration_id }) => {
       await client.post(`/workspaces/${workspace_id}/articles/${article_id}/publish`, { integration_id });
       return { content: [{ type: 'text' as const, text: JSON.stringify({ published: true, article_id, integration_id }) }] };
@@ -137,6 +145,7 @@ export function registerArticleTools(server: McpServer, client: BalzacClient) {
       integration_id: z.string().describe('Integration UUID'),
       scheduled_for: z.string().describe('ISO 8601 datetime, e.g. 2026-04-01T10:00:00Z'),
     },
+    additive('Schedule article', { openWorld: true }),
     async ({ workspace_id, article_id, integration_id, scheduled_for }) => {
       await client.post(`/workspaces/${workspace_id}/articles/${article_id}/schedule`, { integration_id, scheduled_for });
       return { content: [{ type: 'text' as const, text: JSON.stringify({ scheduled: true, article_id, integration_id, scheduled_for }) }] };
@@ -151,6 +160,7 @@ export function registerArticleTools(server: McpServer, client: BalzacClient) {
       article_id: z.string().describe('Article UUID'),
       format: z.string().optional().describe('Export format: html, markdown, or xml (default html)'),
     },
+    readOnly('Export article'),
     async ({ workspace_id, article_id, format }) => {
       const res = await client.get(`/workspaces/${workspace_id}/articles/${article_id}/export`, { export_format: format || 'html' });
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data) }] };

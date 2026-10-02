@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { BalzacClient } from '../client.js';
+import { readOnly } from '../annotations.js';
 
 export function registerSearchConsoleTools(server: McpServer, client: BalzacClient) {
   server.tool(
@@ -11,6 +12,7 @@ export function registerSearchConsoleTools(server: McpServer, client: BalzacClie
       start_date: z.string().optional().describe('Start date (YYYY-MM-DD). Default: 30 days before end_date'),
       end_date: z.string().optional().describe('End date (YYYY-MM-DD). Default: today'),
     },
+    readOnly('Search Console overview'),
     async ({ workspace_id, ...q }) => {
       const res = await client.get(`/workspaces/${workspace_id}/search_console`, q);
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data) }] };
@@ -27,6 +29,7 @@ export function registerSearchConsoleTools(server: McpServer, client: BalzacClie
       page: z.number().optional().describe('Page number'),
       per_page: z.number().optional().describe('Results per page (max 100)'),
     },
+    readOnly('Search Console queries'),
     async ({ workspace_id, ...q }) => {
       const res = await client.get(`/workspaces/${workspace_id}/search_console/queries`, q);
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data) }] };
@@ -43,6 +46,7 @@ export function registerSearchConsoleTools(server: McpServer, client: BalzacClie
       page: z.number().optional().describe('Page number'),
       per_page: z.number().optional().describe('Results per page (max 100)'),
     },
+    readOnly('Search Console pages'),
     async ({ workspace_id, ...q }) => {
       const res = await client.get(`/workspaces/${workspace_id}/search_console/pages`, q);
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data) }] };
@@ -57,6 +61,7 @@ export function registerSearchConsoleTools(server: McpServer, client: BalzacClie
       start_date: z.string().optional().describe('Start date (YYYY-MM-DD). Default: 30 days before end_date'),
       end_date: z.string().optional().describe('End date (YYYY-MM-DD). Default: today'),
     },
+    readOnly('Search Console daily stats'),
     async ({ workspace_id, ...q }) => {
       const res = await client.get(`/workspaces/${workspace_id}/search_console/daily`, q);
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data) }] };

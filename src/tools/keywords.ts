@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { BalzacClient } from '../client.js';
+import { readOnly, additive, destructive } from '../annotations.js';
 
 export function registerKeywordTools(server: McpServer, client: BalzacClient) {
   server.tool(
@@ -12,6 +13,7 @@ export function registerKeywordTools(server: McpServer, client: BalzacClient) {
       page: z.number().optional().describe('Page number'),
       per_page: z.number().optional().describe('Results per page'),
     },
+    readOnly('List keywords'),
     async ({ workspace_id, ...q }) => {
       const res = await client.get(`/workspaces/${workspace_id}/keywords`, q);
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data) }] };
@@ -25,6 +27,7 @@ export function registerKeywordTools(server: McpServer, client: BalzacClient) {
       workspace_id: z.string().describe('Workspace UUID'),
       keyword_id: z.string().describe('Keyword UUID'),
     },
+    readOnly('Get keyword'),
     async ({ workspace_id, keyword_id }) => {
       const res = await client.get(`/workspaces/${workspace_id}/keywords/${keyword_id}`);
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data) }] };
@@ -38,6 +41,7 @@ export function registerKeywordTools(server: McpServer, client: BalzacClient) {
       workspace_id: z.string().describe('Workspace UUID'),
       name: z.string().describe('Keyword text, e.g. "content marketing strategy"'),
     },
+    additive('Add keyword'),
     async ({ workspace_id, name }) => {
       const res = await client.post(`/workspaces/${workspace_id}/keywords`, { keyword: { name } });
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data) }] };
@@ -51,6 +55,7 @@ export function registerKeywordTools(server: McpServer, client: BalzacClient) {
       workspace_id: z.string().describe('Workspace UUID'),
       keyword_id: z.string().describe('Keyword UUID'),
     },
+    additive('Enable keyword', { idempotent: true }),
     async ({ workspace_id, keyword_id }) => {
       await client.post(`/workspaces/${workspace_id}/keywords/${keyword_id}/enable`);
       return { content: [{ type: 'text' as const, text: JSON.stringify({ enabled: true, keyword_id }) }] };
@@ -64,6 +69,7 @@ export function registerKeywordTools(server: McpServer, client: BalzacClient) {
       workspace_id: z.string().describe('Workspace UUID'),
       keyword_id: z.string().describe('Keyword UUID'),
     },
+    additive('Disable keyword', { idempotent: true }),
     async ({ workspace_id, keyword_id }) => {
       await client.post(`/workspaces/${workspace_id}/keywords/${keyword_id}/disable`);
       return { content: [{ type: 'text' as const, text: JSON.stringify({ disabled: true, keyword_id }) }] };
@@ -77,6 +83,7 @@ export function registerKeywordTools(server: McpServer, client: BalzacClient) {
       workspace_id: z.string().describe('Workspace UUID'),
       keyword_id: z.string().describe('Keyword UUID'),
     },
+    destructive('Delete keyword', { idempotent: true }),
     async ({ workspace_id, keyword_id }) => {
       await client.del(`/workspaces/${workspace_id}/keywords/${keyword_id}`);
       return { content: [{ type: 'text' as const, text: JSON.stringify({ deleted: true, keyword_id }) }] };
@@ -89,6 +96,7 @@ export function registerKeywordTools(server: McpServer, client: BalzacClient) {
     {
       workspace_id: z.string().describe('Workspace UUID'),
     },
+    additive('Generate keywords'),
     async ({ workspace_id }) => {
       const res = await client.post(`/workspaces/${workspace_id}/keywords/generate`);
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data ?? { started: true, message: 'Generating new keywords. They will appear shortly.' }) }] };

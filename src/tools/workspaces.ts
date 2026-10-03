@@ -35,11 +35,10 @@ export function registerWorkspaceTools(server: McpServer, client: BalzacClient, 
 
   server.tool(
     'create_workspace',
-    'Create a new workspace by providing a website domain. Balzac will automatically analyze the site and discover keywords. The workspace status will be "analyzing" until setup completes. Costs no credits.',
+    'Create a new workspace from a website domain. Balzac analyzes the site to fill in its description, audience, keywords, and competitors; the workspace becomes "ready" when setup completes, usually within a few minutes. Costs no credits.',
     {
       domain: z.string().describe('Website domain, e.g. example.com'),
       name: z.string().optional().describe('Workspace name (auto-detected if omitted)'),
-      description: z.string().optional().describe('Description of the workspace'),
       language: z.string().optional().describe('Language code, e.g. en, fr, de'),
       auto_accept_keywords: z.boolean().optional().describe('Auto-accept discovered keywords (default true)'),
       auto_accept_suggestions: z.boolean().optional().describe('Auto-accept generated suggestions'),
@@ -54,7 +53,6 @@ export function registerWorkspaceTools(server: McpServer, client: BalzacClient, 
     async (params) => {
       const body: Record<string, unknown> = { domain: params.domain };
       if (params.name) body.name = params.name;
-      if (params.description) body.description = params.description;
       if (params.language) body.language = params.language;
       if (params.auto_accept_keywords !== undefined) body.auto_accept_keywords = params.auto_accept_keywords;
       if (params.auto_accept_suggestions !== undefined) body.auto_accept_suggestions = params.auto_accept_suggestions;

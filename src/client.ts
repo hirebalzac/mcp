@@ -63,7 +63,10 @@ export class BalzacClient {
       const err = data as Record<string, unknown>;
       const error = (err.error || err) as Record<string, unknown>;
       const msg = (error.message as string) || `HTTP ${res.status}`;
-      throw new Error(`[${res.status}] ${msg}`);
+      // Validation errors carry the reasons in `details`; without them the
+      // message is just "could not be created".
+      const details = Array.isArray(error.details) && error.details.length ? ` ${error.details.join('; ')}.` : '';
+      throw new Error(`[${res.status}] ${msg}${details}`);
     }
 
     return { status: res.status, data };

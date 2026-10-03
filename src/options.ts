@@ -15,3 +15,7 @@ export function picturesStyleParam(options: ServerOptions, aiDescription: string
     ? z.string().optional().describe(aiDescription)
     : z.enum(['stock-photo']).optional().describe('Picture style for cover images: stock-photo (stock photos).');
 }
+
+// Managing integrations and deleting workspaces are for company admins. API
+// keys count as admin; an OAuth token acts with its user's role.
+export const ADMINS_ONLY = 'Admins only; members get 403.';

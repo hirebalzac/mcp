@@ -62,7 +62,7 @@ official website: https://hirebalzac.ai
 |------|-----------|-------------|
 | `list_workspaces` | `status?` (new, running, ready, imported, not_imported), `page?`, `per_page?` | List all workspaces |
 | `get_workspace` | `workspace_id` | Get workspace details |
-| `create_workspace` | `domain`, `name?`, `description?`, `language?`, `auto_accept_keywords?`, `auto_accept_suggestions?`, `pictures_style?`, `max_articles_per_period?`, `max_articles_period?` | Create workspace from domain (422 `plan_limit_reached` at the plan's website limit) |
+| `create_workspace` | `domain`, `name?`, `language?`, `auto_accept_keywords?`, `auto_accept_suggestions?`, `pictures_style?`, `title_based_featured_image?`, `brand_color?`, `title_font?`, `max_articles_per_period?`, `max_articles_period?` | Create workspace from domain (422 `plan_limit_reached` at the plan's website limit) |
 | `update_workspace` | `workspace_id`, `name?`, `description?`, `language?`, `pictures_style?`, `max_articles_per_period?`, `max_articles_period?` | Update workspace |
 | `delete_workspace` | `workspace_id` | Delete workspace (admins only) |
 
@@ -106,8 +106,8 @@ official website: https://hirebalzac.ai
 | `delete_article` | `workspace_id`, `article_id` | Delete article |
 | `rewrite_article` | `workspace_id`, `article_id`, `length?`, `language?`, `tone_of_voice_id?`, `additional_instructions?` | Rewrite (free, 2 per article, async) |
 | `regenerate_article_picture` | `workspace_id`, `article_id`, `picture_mode?`, `pictures_style?`, `additional_instructions?` | New cover (free, 2 per article, async) |
-| `publish_article` | `workspace_id`, `article_id`, `integration_id` | Publish to integration; returns the article with its new publication |
-| `schedule_article` | `workspace_id`, `article_id`, `integration_id`, `scheduled_for` | Schedule publication; returns the article |
+| `publish_article` | `workspace_id`, `article_id`, `integration_id` | Publish to integration; returns the article (without `html_content`) and its new publication |
+| `schedule_article` | `workspace_id`, `article_id`, `integration_id`, `scheduled_for` | Schedule publication; returns the article (without `html_content`) |
 | `export_article` | `workspace_id`, `article_id`, `format?` | Export as html/markdown/xml |
 
 ### Competitors

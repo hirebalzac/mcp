@@ -2,8 +2,11 @@ import { z } from 'zod';
 
 // What a server built by createServer exposes. The remote connector
 // (mcp.hirebalzac.ai) leaves out AI image generation, which the Claude
-// connector directory doesn't accept: its picture tools offer title overlays
-// and stock photos only. The local npm server keeps everything.
+// connector directory doesn't accept: its tools offer no AI style or ai mode,
+// only title overlays and stock photos. The local npm server keeps
+// everything. The API still generates some images with AI behind those two
+// modes (a title cover's background, and a stock cover when no stock photo
+// matches); turning that off needs a flag on the API side.
 //
 // admin is false when the credentials act as a member (an OAuth token
 // approved by one): the admin-only tools are left out, since the API would

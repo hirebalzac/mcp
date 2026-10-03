@@ -1,6 +1,7 @@
 // Remote MCP server (Streamable HTTP), deployed at https://mcp.hirebalzac.ai
 // so Balzac can be added as a connector in Claude, ChatGPT, and other clients
-// that speak MCP over HTTP. It serves the same tools as the stdio server.
+// that speak MCP over HTTP. It serves the stdio server's tools, minus AI
+// image generation, and minus the admin-only tools for members.
 //
 // Auth: clients send a bearer token, either an OAuth access token issued by
 // the Balzac app (the authorization server advertised below) or a `bz_` API

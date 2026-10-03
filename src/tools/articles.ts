@@ -7,6 +7,16 @@ import { readOnly, additive, destructive } from '../annotations.js';
 const NEW_COVER_TERMS =
   'Generate a new main picture (cover) for a completed article. Free: each article includes 2 new covers on top of the one written with it. Runs asynchronously: main_picture_url changes when it is ready. Fails with 409 conflict while a new cover is already being generated, and 422 free_limit_reached once its 2 free new covers are used.';
 
+// rewrite, publish and schedule answer with the whole article. Its
+// html_content runs to tens of KB, and right after a rewrite starts it is
+// still the old text, so these tools leave it out: get_article reads it.
+function withoutContent(data: unknown): unknown {
+  const article = (data as { article?: unknown } | null)?.article;
+  if (!article || typeof article !== 'object') return data;
+  const { html_content, ...rest } = article as Record<string, unknown>;
+  return { ...(data as Record<string, unknown>), article: rest };
+}
+
 export function registerArticleTools(server: McpServer, client: BalzacClient, options: ServerOptions) {
   server.tool(
     'list_articles',
@@ -81,7 +91,7 @@ export function registerArticleTools(server: McpServer, client: BalzacClient, op
 
   server.tool(
     'rewrite_article',
-    'Rewrite a completed article (status "done"), optionally with a new length, language, tone of voice or instructions. Free: each article includes 2 rewrites, and a rewrite counts when it finishes. Runs asynchronously: poll get_article until rewriting is false, and give up after a timeout (a rewrite that fails partway keeps rewriting true). Fails with 409 conflict while a rewrite of the article is already running, and 422 free_limit_reached once its 2 free rewrites are used.',
+    'Rewrite a completed article (status "done"), optionally with a new length, language, tone of voice or instructions. Free: each article includes 2 rewrites, and a rewrite counts when it finishes. Runs asynchronously: poll get_article until rewriting is false, and give up after a timeout (a rewrite that fails partway keeps rewriting true). Fails with 409 conflict while a rewrite of the article is already running, and 422 free_limit_reached once its 2 free rewrites are used. Returns the article without its content; get_article reads the new text once the rewrite is done.',
     {
       workspace_id: z.string().describe('Workspace UUID'),
       article_id: z.string().describe('Article UUID'),
@@ -98,18 +108,22 @@ export function registerArticleTools(server: McpServer, client: BalzacClient, op
       if (params.tone_of_voice_id) body.tone_of_voice_id = params.tone_of_voice_id;
       if (params.additional_instructions) body.additional_instructions = params.additional_instructions;
 
-      const res = await client.post<Record<string, unknown>>(`/workspaces/${workspace_id}/articles/${article_id}/rewrite`, body);
-      return { content: [{ type: 'text' as const, text: JSON.stringify({ ...res.data, message: 'Article rewrite started. Poll get_article until rewriting is false.' }) }] };
+      const res = await client.post(`/workspaces/${workspace_id}/articles/${article_id}/rewrite`, body);
+      return { content: [{ type: 'text' as const, text: JSON.stringify({ ...(withoutContent(res.data) as object), message: 'Article rewrite started. Poll get_article until rewriting is false.' }) }] };
     }
   );
 
   // Without AI images the mode is required: left out, it would fall back to
-  // the workspace's default, which can be AI.
+  // the workspace's default, which can be AI. Stock always sends the
+  // stock-photo style, since without one the API uses the workspace's style.
+  // Two gaps only the API can close: a title cover's background is generated
+  // with AI, and a stock cover falls back to an AI photo when no stock photo
+  // matches.
   server.tool(
     'regenerate_article_picture',
     options.aiImages
-      ? `${NEW_COVER_TERMS} Supports three modes: title (title overlay with brand color), stock (stock photo), ai (AI-generated in a chosen style).`
-      : `${NEW_COVER_TERMS} Two modes: title (title overlay with brand color) or stock (stock photo).`,
+      ? `${NEW_COVER_TERMS} Supports three modes: title (the title over a generated background in the brand color), stock (stock photo), ai (AI-generated in a chosen style).`
+      : `${NEW_COVER_TERMS} Two modes: title (the title over a generated background in the brand color) or stock (a stock photo, or a generated photo when no stock photo matches).`,
     options.aiImages
       ? {
           workspace_id: z.string().describe('Workspace UUID'),
@@ -121,13 +135,14 @@ export function registerArticleTools(server: McpServer, client: BalzacClient, op
       : {
           workspace_id: z.string().describe('Workspace UUID'),
           article_id: z.string().describe('Article UUID'),
-          picture_mode: z.enum(['title', 'stock']).describe('Picture mode: title (title overlay with brand color) or stock (stock photo)'),
+          picture_mode: z.enum(['title', 'stock']).describe('Picture mode: title (the title over a generated background in the brand color) or stock (stock photo)'),
         },
     destructive('Regenerate article picture'),
     async ({ workspace_id, article_id, ...params }: Record<string, string | undefined>) => {
       const body: Record<string, unknown> = {};
       if (params.picture_mode) body.picture_mode = params.picture_mode;
       if (params.pictures_style) body.pictures_style = params.pictures_style;
+      else if (params.picture_mode === 'stock') body.pictures_style = 'stock-photo';
       if (params.additional_instructions) body.additional_instructions = params.additional_instructions;
 
       const res = await client.post(`/workspaces/${workspace_id}/articles/${article_id}/regenerate_picture`, body);
@@ -137,7 +152,7 @@ export function registerArticleTools(server: McpServer, client: BalzacClient, op
 
   server.tool(
     'publish_article',
-    'Publish a completed article to a connected integration (WordPress, Webflow, Wix, GoHighLevel, or Webhook) right away. Returns the article with its new publication. The post is sent in the background: published turns true once the platform accepts it, and the live URL (the publication\'s url and the article\'s live_url) appears later, once the platform reports it. Poll get_article to follow it and stop after a timeout; drafts and webhooks that answer without a URL never get one.',
+    'Publish a completed article to a connected integration (WordPress, Webflow, Wix, GoHighLevel, or Webhook) right away. Returns the article (without its content) and its new publication. The post is sent in the background: published turns true once the platform accepts it, and the live URL (the publication\'s url and the article\'s live_url) appears later, once the platform reports it. Poll get_article to follow it and stop after a timeout; drafts and webhooks that answer without a URL never get one.',
     {
       workspace_id: z.string().describe('Workspace UUID'),
       article_id: z.string().describe('Article UUID'),
@@ -145,14 +160,14 @@ export function registerArticleTools(server: McpServer, client: BalzacClient, op
     },
     additive('Publish article', { openWorld: true }),
     async ({ workspace_id, article_id, integration_id }) => {
-      const res = await client.post<Record<string, unknown>>(`/workspaces/${workspace_id}/articles/${article_id}/publish`, { integration_id });
-      return { content: [{ type: 'text' as const, text: JSON.stringify({ ...res.data, message: 'Publishing started. The live URL appears later: poll get_article for live_url.' }) }] };
+      const res = await client.post(`/workspaces/${workspace_id}/articles/${article_id}/publish`, { integration_id });
+      return { content: [{ type: 'text' as const, text: JSON.stringify({ ...(withoutContent(res.data) as object), message: 'Publishing started. The live URL appears later: poll get_article for live_url.' }) }] };
     }
   );
 
   server.tool(
     'schedule_article',
-    'Schedule a completed article for future publication on a connected integration. Returns the article with its scheduled publication.',
+    'Schedule a completed article for future publication on a connected integration. Returns the article (without its content) and its scheduled publication.',
     {
       workspace_id: z.string().describe('Workspace UUID'),
       article_id: z.string().describe('Article UUID'),
@@ -162,7 +177,7 @@ export function registerArticleTools(server: McpServer, client: BalzacClient, op
     additive('Schedule article', { openWorld: true }),
     async ({ workspace_id, article_id, integration_id, scheduled_for }) => {
       const res = await client.post(`/workspaces/${workspace_id}/articles/${article_id}/schedule`, { integration_id, scheduled_for });
-      return { content: [{ type: 'text' as const, text: JSON.stringify(res.data) }] };
+      return { content: [{ type: 'text' as const, text: JSON.stringify(withoutContent(res.data)) }] };
     }
   );
 

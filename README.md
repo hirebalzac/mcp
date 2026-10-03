@@ -209,7 +209,7 @@ Rewriting an article and generating a new cover are free. Each article includes 
 
 Only admins can manage integrations (`create_integration`, `update_integration`, `delete_integration`, `reconnect_integration`) and delete workspaces (`delete_workspace`). Members get `403 forbidden` there, and can still list integrations and publish to them.
 
-API keys count as admin, so the local server keeps every tool. On the remote server, an app connected by a member doesn't list the admin-only tools at all.
+API keys count as admin, so the local server keeps every tool. On the remote server, an app connected by a member doesn't list the admin-only tools at all. Apps cache the tool list, so after a role change (or for a connection made before this update), reconnect the app to refresh it: until then a member calling an admin-only tool gets a "Tool ... not found" error instead of the 403 message, and a newly promoted admin doesn't see those tools yet.
 
 ---
 

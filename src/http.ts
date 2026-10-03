@@ -42,24 +42,40 @@ function jsonRpcError(code: number, message: string) {
 // Tokens are checked against the API, which accepts the same OAuth tokens
 // and API keys. Successful checks are cached briefly since clients send
 // several requests in a row; the API still authenticates every tool call.
+//
+// The check also tells whether the credentials act as an admin, so members
+// aren't offered the admin-only tools. The API reads the role on every call,
+// so a cached flag that went stale only shows or hides tools for a minute;
+// it never grants anything.
 const VERIFIED_TOKEN_TTL_MS = 60_000;
-const verifiedTokens = new Map<string, number>();
 
-async function isValidToken(token: string): Promise<boolean> {
+interface VerifiedToken {
+  until: number;
+  admin: boolean;
+}
+
+const verifiedTokens = new Map<string, VerifiedToken>();
+
+// Returns null when the API rejects the token.
+async function verifyToken(token: string): Promise<{ admin: boolean } | null> {
   const key = createHash('sha256').update(token).digest('hex');
-  if ((verifiedTokens.get(key) ?? 0) > Date.now()) return true;
+  const cached = verifiedTokens.get(key);
+  if (cached && cached.until > Date.now()) return { admin: cached.admin };
 
   const res = await fetch(`${API_URL}/me`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   });
-  const body = (await res.json().catch(() => null)) as { auth?: { expires_at?: string | null } } | null;
-  if (res.status === 401) return false;
+  const body = (await res.json().catch(() => null)) as { auth?: { expires_at?: string | null; admin?: boolean } } | null;
+  if (res.status === 401) return null;
   if (!res.ok) throw new Error(`GET /me returned HTTP ${res.status}`);
 
+  // Only an explicit false hides tools: without the flag, offer everything
+  // and let the API answer.
+  const admin = body?.auth?.admin !== false;
   const expiresAt = body?.auth?.expires_at ? Date.parse(body.auth.expires_at) : Infinity;
   if (verifiedTokens.size > 10_000) verifiedTokens.clear();
-  verifiedTokens.set(key, Math.min(Date.now() + VERIFIED_TOKEN_TTL_MS, expiresAt));
-  return true;
+  verifiedTokens.set(key, { until: Math.min(Date.now() + VERIFIED_TOKEN_TTL_MS, expiresAt), admin });
+  return { admin };
 }
 
 function requireBearerToken(mcpPath: string) {
@@ -69,8 +85,10 @@ function requireBearerToken(mcpPath: string) {
     const token = req.headers.authorization?.match(/^Bearer\s+(\S+)$/i)?.[1];
 
     try {
-      if (token && (await isValidToken(token))) {
+      const verified = token ? await verifyToken(token) : null;
+      if (verified) {
         res.locals.token = token;
+        res.locals.admin = verified.admin;
         return next();
       }
     } catch (error) {
@@ -92,8 +110,9 @@ async function handleMcpRequest(req: Request, res: Response) {
   const label = message?.method === 'tools/call' ? `tools/call ${message.params?.name}` : message?.method;
   res.on('finish', () => console.log(`${req.method} ${req.path} ${label ?? '-'} ${res.statusCode} ${Date.now() - started}ms`));
 
-  // No AI image generation on the connector: the Claude directory doesn't accept it.
-  const server = createServer(new BalzacClient(res.locals.token, API_URL), { aiImages: false });
+  // No AI image generation on the connector: the Claude directory doesn't
+  // accept it. Members don't get the admin-only tools.
+  const server = createServer(new BalzacClient(res.locals.token, API_URL), { aiImages: false, admin: res.locals.admin });
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
   res.on('close', () => {
     transport.close();

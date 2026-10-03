@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { BalzacClient } from '../client.js';
-import { ADMINS_ONLY, picturesStyleParam, type ServerOptions } from '../options.js';
+import { ADMINS_ONLY, isAdmin, picturesStyleParam, type ServerOptions } from '../options.js';
 import { readOnly, additive, destructive } from '../annotations.js';
 
 export function registerWorkspaceTools(server: McpServer, client: BalzacClient, options: ServerOptions) {
@@ -100,6 +100,8 @@ export function registerWorkspaceTools(server: McpServer, client: BalzacClient, 
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data) }] };
     }
   );
+
+  if (!isAdmin(options)) return;
 
   server.tool(
     'delete_workspace',

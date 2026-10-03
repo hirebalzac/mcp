@@ -2,9 +2,9 @@ import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { BalzacClient } from '../client.js';
 import { readOnly, additive, destructive } from '../annotations.js';
-import { ADMINS_ONLY } from '../options.js';
+import { ADMINS_ONLY, isAdmin, type ServerOptions } from '../options.js';
 
-export function registerIntegrationTools(server: McpServer, client: BalzacClient) {
+export function registerIntegrationTools(server: McpServer, client: BalzacClient, options: ServerOptions) {
   server.tool(
     'list_integrations',
     'List publishing integrations for a workspace. Integrations connect to WordPress, Webflow, Wix, GoHighLevel, or Webhook endpoints.',
@@ -33,6 +33,9 @@ export function registerIntegrationTools(server: McpServer, client: BalzacClient
       return { content: [{ type: 'text' as const, text: JSON.stringify(res.data) }] };
     }
   );
+
+  // Members can list integrations and publish to them, nothing more.
+  if (!isAdmin(options)) return;
 
   server.tool(
     'create_integration',

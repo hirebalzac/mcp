@@ -92,7 +92,7 @@ export function registerKeywordTools(server: McpServer, client: BalzacClient) {
 
   server.tool(
     'generate_keywords',
-    'Generate new keywords using AI based on the workspace context. Runs asynchronously — new keywords appear shortly. Returns an error if the keyword limit for your plan is reached.',
+    'Generate new keywords using AI based on the workspace context. Runs asynchronously: new keywords appear shortly. Returns an error if the keyword limit for your plan is reached.',
     {
       workspace_id: z.string().describe('Workspace UUID'),
     },

@@ -1,6 +1,6 @@
 ---
 name: balzac-mcp
-description: Balzac MCP server gives AI assistants native tool access to the Balzac content platform — manage workspaces, keywords, suggestions, articles, integrations, and more through structured MCP tool calls instead of CLI commands.
+description: Balzac MCP server gives AI assistants native tool access to the Balzac content platform. Manage workspaces, keywords, suggestions, articles, integrations, and more through structured MCP tool calls instead of CLI commands.
 homepage: https://developer.hirebalzac.ai
 metadata: {"clawdbot":{"emoji":"✍️","requires":{"env":["BALZAC_API_KEY"]}}}
 ---
@@ -50,15 +50,21 @@ official website: https://hirebalzac.ai
 
 ## Tool Reference
 
+### Account
+
+| Tool | Parameters | Description |
+|------|-----------|-------------|
+| `get_account` | (none) | Account, available credits, admin flag (and the person's role for connected apps) |
+
 ### Workspaces
 
 | Tool | Parameters | Description |
 |------|-----------|-------------|
-| `list_workspaces` | `status?`, `page?`, `per_page?` | List all workspaces |
+| `list_workspaces` | `status?` (new, running, ready, imported, not_imported), `page?`, `per_page?` | List all workspaces |
 | `get_workspace` | `workspace_id` | Get workspace details |
-| `create_workspace` | `domain`, `name?`, `description?`, `language?`, `auto_accept_keywords?`, `auto_accept_suggestions?`, `pictures_style?`, `max_articles_per_period?`, `max_articles_period?` | Create workspace from domain |
+| `create_workspace` | `domain`, `name?`, `language?`, `auto_accept_keywords?`, `auto_accept_suggestions?`, `pictures_style?`, `title_based_featured_image?`, `brand_color?`, `title_font?`, `max_articles_per_period?`, `max_articles_period?` | Create workspace from domain (422 `plan_limit_reached` at the plan's website limit) |
 | `update_workspace` | `workspace_id`, `name?`, `description?`, `language?`, `pictures_style?`, `max_articles_per_period?`, `max_articles_period?` | Update workspace |
-| `delete_workspace` | `workspace_id` | Delete workspace |
+| `delete_workspace` | `workspace_id` | Delete workspace (admins only) |
 
 ### Keywords
 
@@ -94,14 +100,14 @@ official website: https://hirebalzac.ai
 
 | Tool | Parameters | Description |
 |------|-----------|-------------|
-| `list_articles` | `workspace_id`, `status?`, `published?`, `page?`, `per_page?` | List articles |
-| `get_article` | `workspace_id`, `article_id` | Get article details + content |
+| `list_articles` | `workspace_id`, `status?`, `published?`, `page?`, `per_page?` | List articles, with `live_url` |
+| `get_article` | `workspace_id`, `article_id` | Get article details + content, `live_url`, `publications[]` (with `url`) |
 | `update_article` | `workspace_id`, `article_id`, `title?`, `slug?`, `description?`, `language?`, `tone_of_voice_id?` | Update metadata |
 | `delete_article` | `workspace_id`, `article_id` | Delete article |
-| `rewrite_article` | `workspace_id`, `article_id`, `length?`, `language?`, `tone_of_voice_id?`, `additional_instructions?` | Rewrite (3 credits, async) |
-| `regenerate_article_picture` | `workspace_id`, `article_id`, `pictures_style?`, `additional_instructions?` | Regenerate picture (1 credit, async) |
-| `publish_article` | `workspace_id`, `article_id`, `integration_id` | Publish to integration |
-| `schedule_article` | `workspace_id`, `article_id`, `integration_id`, `scheduled_for` | Schedule publication |
+| `rewrite_article` | `workspace_id`, `article_id`, `length?`, `language?`, `tone_of_voice_id?`, `additional_instructions?` | Rewrite (free, 2 per article, async) |
+| `regenerate_article_picture` | `workspace_id`, `article_id`, `picture_mode?`, `pictures_style?`, `additional_instructions?` | New cover (free, 2 per article, async) |
+| `publish_article` | `workspace_id`, `article_id`, `integration_id` | Publish to integration; returns the article (without `html_content`) and its new publication |
+| `schedule_article` | `workspace_id`, `article_id`, `integration_id`, `scheduled_for` | Schedule publication; returns the article (without `html_content`) |
 | `export_article` | `workspace_id`, `article_id`, `format?` | Export as html/markdown/xml |
 
 ### Competitors
@@ -139,11 +145,11 @@ official website: https://hirebalzac.ai
 | Tool | Parameters | Description |
 |------|-----------|-------------|
 | `list_integrations` | `workspace_id`, `page?`, `per_page?` | List integrations |
-| `get_integration` | `workspace_id`, `integration_id` | Get integration details |
-| `create_integration` | `workspace_id`, `service`, `name`, `auto_publish?`, + service-specific fields | Create integration |
-| `update_integration` | `workspace_id`, `integration_id`, `name?`, `auto_publish?`, + service-specific fields | Update integration |
-| `delete_integration` | `workspace_id`, `integration_id` | Delete integration |
-| `reconnect_integration` | `workspace_id`, `integration_id` | Re-test connection |
+| `get_integration` | `workspace_id`, `integration_id` | Get integration details (credentials are never returned) |
+| `create_integration` | `workspace_id`, `service`, `name`, `auto_publish?`, + service-specific fields | Create integration (admins only) |
+| `update_integration` | `workspace_id`, `integration_id`, `name?`, `auto_publish?`, + service-specific fields | Update integration (admins only) |
+| `delete_integration` | `workspace_id`, `integration_id` | Delete integration (admins only) |
+| `reconnect_integration` | `workspace_id`, `integration_id` | Re-test connection (admins only) |
 
 **Service-specific fields for create/update_integration:**
 
@@ -153,6 +159,8 @@ official website: https://hirebalzac.ai
 - **gohighlevel**: `gohighlevel_api_token`, `gohighlevel_location_id`, `gohighlevel_blog_id`, `gohighlevel_author_id`, `gohighlevel_category_id`, `gohighlevel_publication_status`
 - **webhook**: `webhook_url`, `webhook_bearer_token`
 
+Credentials are write-only. When `update_integration` moves `wordpress_url` to another site, send `wordpress_application_password` in the same call; when it changes `webhook_url` on an integration with a bearer token, send `webhook_bearer_token`. Otherwise the update fails with `422 validation_failed`.
+
 ---
 
 ## Credit Costs
@@ -161,10 +169,18 @@ official website: https://hirebalzac.ai
 |--------|---------|
 | Write article (accept_suggestion / create_briefing) | 5 |
 | Generate 10 new suggestions | 1 |
-| Rewrite article | 3 |
-| Regenerate picture | 1 |
 
-Insufficient credits returns an error with `required` and `available` counts.
+Insufficient credits returns an error with `required` and `available` counts. `get_account` shows the credits left.
+
+`rewrite_article` and `regenerate_article_picture` are free: 2 rewrites and 2 new covers per article. Another one while one runs returns `409 conflict`; once the 2 are used, `422 free_limit_reached`.
+
+---
+
+## Roles and Errors
+
+Only admins can manage integrations and delete workspaces; members get `403 forbidden` there, and can still list integrations and publish to them. API keys count as admin.
+
+Tool errors start with the status and error type, e.g. `[422 free_limit_reached] You've used the 2 free rewrites for this article.`
 
 ---
 
@@ -175,8 +191,9 @@ These tools start background jobs and return immediately:
 - `generate_keywords` -- poll `list_keywords` for new results
 - `generate_suggestions` -- poll `list_suggestions` for new results
 - `create_briefing` / `accept_suggestion` -- poll `list_articles` or `get_article` for status
-- `rewrite_article` -- poll `get_article` for completion
+- `rewrite_article` -- poll `get_article` until `rewriting` is false (give up after a timeout)
 - `regenerate_article_picture` -- poll `get_article` for new `main_picture_url`
+- `publish_article` -- poll `get_article` for `live_url` (drafts and webhooks without a URL never get one)
 - `reconnect_integration` -- poll `get_integration` for status change
 
 Typical polling interval: 5-10 seconds. Article writing takes 2-5 minutes.
@@ -189,7 +206,7 @@ Typical polling interval: 5-10 seconds. Article writing takes 2-5 minutes.
 
 ```
 1. create_workspace { domain: "myblog.com" }
-2. (wait for status "ready")
+2. (wait for status "ready" or "imported")
 3. list_keywords { workspace_id }
 4. generate_suggestions { workspace_id }
 5. (wait ~30s)

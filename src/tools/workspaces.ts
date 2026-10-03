@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { BalzacClient } from '../client.js';
-import { picturesStyleParam, type ServerOptions } from '../options.js';
+import { ADMINS_ONLY, isAdmin, picturesStyleParam, type ServerOptions } from '../options.js';
 import { readOnly, additive, destructive } from '../annotations.js';
 
 export function registerWorkspaceTools(server: McpServer, client: BalzacClient, options: ServerOptions) {
@@ -9,7 +9,7 @@ export function registerWorkspaceTools(server: McpServer, client: BalzacClient, 
     'list_workspaces',
     'List all workspaces in your Balzac account. Returns id, name, domain, status, and language for each workspace.',
     {
-      status: z.string().optional().describe('Filter by status: analyzing, ready, error'),
+      status: z.string().optional().describe('Filter by status: new, running, ready, imported, not_imported'),
       page: z.number().optional().describe('Page number (default 1)'),
       per_page: z.number().optional().describe('Results per page (default 25)'),
     },
@@ -35,7 +35,7 @@ export function registerWorkspaceTools(server: McpServer, client: BalzacClient, 
 
   server.tool(
     'create_workspace',
-    'Create a new workspace from a website domain. Balzac analyzes the site to fill in its description, audience, keywords, and competitors; the workspace becomes "ready" when setup completes, usually within a few minutes. Costs no credits.',
+    'Create a new workspace from a website domain. Balzac analyzes the site to fill in its description, audience, keywords, and competitors; the workspace goes from "new" and "running" to "ready" or "imported" when setup completes, usually within a few minutes ("not_imported" if the site could not be analyzed). Costs no credits. Fails with 422 plan_limit_reached when the account is at its plan\'s website limit.',
     {
       domain: z.string().describe('Website domain, e.g. example.com'),
       name: z.string().optional().describe('Workspace name (auto-detected if omitted)'),
@@ -101,9 +101,11 @@ export function registerWorkspaceTools(server: McpServer, client: BalzacClient, 
     }
   );
 
+  if (!isAdmin(options)) return;
+
   server.tool(
     'delete_workspace',
-    'Permanently delete a workspace and all its data.',
+    `Permanently delete a workspace and all its data. ${ADMINS_ONLY}`,
     {
       workspace_id: z.string().describe('Workspace UUID'),
     },

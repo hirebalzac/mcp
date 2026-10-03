@@ -2,8 +2,9 @@ import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { BalzacClient } from '../client.js';
 import { readOnly, additive, destructive } from '../annotations.js';
+import { ADMINS_ONLY, isAdmin, type ServerOptions } from '../options.js';
 
-export function registerIntegrationTools(server: McpServer, client: BalzacClient) {
+export function registerIntegrationTools(server: McpServer, client: BalzacClient, options: ServerOptions) {
   server.tool(
     'list_integrations',
     'List publishing integrations for a workspace. Integrations connect to WordPress, Webflow, Wix, GoHighLevel, or Webhook endpoints.',
@@ -21,7 +22,7 @@ export function registerIntegrationTools(server: McpServer, client: BalzacClient
 
   server.tool(
     'get_integration',
-    'Get full details of an integration including service-specific fields and connection status.',
+    'Get full details of an integration including service-specific fields and connection status. Credentials (passwords, API keys and tokens) are write-only and never returned.',
     {
       workspace_id: z.string().describe('Workspace UUID'),
       integration_id: z.string().describe('Integration UUID'),
@@ -33,9 +34,12 @@ export function registerIntegrationTools(server: McpServer, client: BalzacClient
     }
   );
 
+  // Members can list integrations and publish to them, nothing more.
+  if (!isAdmin(options)) return;
+
   server.tool(
     'create_integration',
-    'Create a publishing integration. Provide service-specific credentials. A connection test runs automatically after creation. Supported services: wordpress, webflow, wix, gohighlevel, webhook.',
+    `Create a publishing integration. Provide service-specific credentials. A connection test runs automatically after creation. Supported services: wordpress, webflow, wix, gohighlevel, webhook. ${ADMINS_ONLY}`,
     {
       workspace_id: z.string().describe('Workspace UUID'),
       service: z.string().describe('Service: wordpress, webflow, wix, gohighlevel, webhook'),
@@ -88,13 +92,13 @@ export function registerIntegrationTools(server: McpServer, client: BalzacClient
 
   server.tool(
     'update_integration',
-    'Update an integration. You can change the name, auto_publish, and service-specific credentials. A connection test runs automatically after update.',
+    `Update an integration. You can change the name, auto_publish, and service-specific credentials; send only what changes. A connection test runs automatically after update. Moving a URL needs its secret again in the same call: send wordpress_application_password when wordpress_url points to another site (a different scheme, host or port), and webhook_bearer_token when webhook_url changes on an integration that has one. Without it the update fails with 422 validation_failed. ${ADMINS_ONLY}`,
     {
       workspace_id: z.string().describe('Workspace UUID'),
       integration_id: z.string().describe('Integration UUID'),
       name: z.string().optional().describe('New name'),
       auto_publish: z.boolean().optional().describe('Auto-publish toggle'),
-      wordpress_url: z.string().optional().describe('[wordpress] Site URL'),
+      wordpress_url: z.string().optional().describe('[wordpress] Site URL. Moving it to another site needs wordpress_application_password in the same call.'),
       wordpress_username: z.string().optional().describe('[wordpress] Username'),
       wordpress_application_password: z.string().optional().describe('[wordpress] Application password'),
       webflow_api_token: z.string().optional().describe('[webflow] API token'),
@@ -110,7 +114,7 @@ export function registerIntegrationTools(server: McpServer, client: BalzacClient
       gohighlevel_author_id: z.string().optional().describe('[gohighlevel] Author ID'),
       gohighlevel_category_id: z.string().optional().describe('[gohighlevel] Category ID'),
       gohighlevel_publication_status: z.string().optional().describe('[gohighlevel] Publication status'),
-      webhook_url: z.string().optional().describe('[webhook] URL'),
+      webhook_url: z.string().optional().describe('[webhook] URL. Changing it needs webhook_bearer_token in the same call when the integration has one.'),
       webhook_bearer_token: z.string().optional().describe('[webhook] Bearer token'),
     },
     destructive('Update integration', { idempotent: true, openWorld: true }),
@@ -127,7 +131,7 @@ export function registerIntegrationTools(server: McpServer, client: BalzacClient
 
   server.tool(
     'delete_integration',
-    'Delete a publishing integration.',
+    `Delete a publishing integration. ${ADMINS_ONLY}`,
     {
       workspace_id: z.string().describe('Workspace UUID'),
       integration_id: z.string().describe('Integration UUID'),
@@ -141,7 +145,7 @@ export function registerIntegrationTools(server: McpServer, client: BalzacClient
 
   server.tool(
     'reconnect_integration',
-    'Re-test the connection of an integration. The status will go to "pending" until the test completes.',
+    `Re-test the connection of an integration. The status will go to "pending" until the test completes. ${ADMINS_ONLY}`,
     {
       workspace_id: z.string().describe('Workspace UUID'),
       integration_id: z.string().describe('Integration UUID'),

@@ -23,6 +23,8 @@ https://mcp.hirebalzac.ai
 
 Clients that can't do OAuth can send an API key instead, as an `Authorization: Bearer bz_...` header. You can disconnect apps at any time from your Balzac profile page.
 
+A connected app acts with the role of the person who approved it. Members don't get the admin-only tools (see [Roles](#roles)).
+
 The local server below works the same way, using an API key.
 
 ---
@@ -85,15 +87,21 @@ The remote server (`npm run start:http`, deployed from the `Dockerfile`) takes i
 
 ## Available Tools
 
+### Account
+
+| Tool | Description |
+|------|-------------|
+| `get_account` | Account, available credits, and whether the credentials act as an admin |
+
 ### Workspaces
 
 | Tool | Description |
 |------|-------------|
-| `list_workspaces` | List all workspaces |
+| `list_workspaces` | List all workspaces (filter by status: new, running, ready, imported, not_imported) |
 | `get_workspace` | Get workspace details |
 | `create_workspace` | Create a workspace from a domain |
 | `update_workspace` | Update workspace settings |
-| `delete_workspace` | Delete a workspace |
+| `delete_workspace` | Delete a workspace (admins only) |
 
 ### Keywords
 
@@ -129,13 +137,13 @@ The remote server (`npm run start:http`, deployed from the `Dockerfile`) takes i
 
 | Tool | Description |
 |------|-------------|
-| `list_articles` | List articles (filter by status, published) |
-| `get_article` | Get article details and content |
+| `list_articles` | List articles (filter by status, published), with each one's `live_url` |
+| `get_article` | Get article details and content, `live_url` and publications |
 | `update_article` | Update article metadata |
 | `delete_article` | Delete an article |
-| `rewrite_article` | Rewrite article content (3 credits) |
-| `regenerate_article_picture` | Regenerate main picture (1 credit) |
-| `publish_article` | Publish to an integration |
+| `rewrite_article` | Rewrite article content (free, 2 per article) |
+| `regenerate_article_picture` | Generate a new cover (free, 2 per article) |
+| `publish_article` | Publish to an integration (the live URL shows up later in `get_article`) |
 | `schedule_article` | Schedule future publication |
 | `export_article` | Export as HTML, Markdown, or XML |
 
@@ -174,11 +182,13 @@ The remote server (`npm run start:http`, deployed from the `Dockerfile`) takes i
 | Tool | Description |
 |------|-------------|
 | `list_integrations` | List publishing integrations |
-| `get_integration` | Get integration details |
-| `create_integration` | Create an integration (WordPress, Webflow, Wix, GoHighLevel, Webhook) |
-| `update_integration` | Update integration settings |
-| `delete_integration` | Delete an integration |
-| `reconnect_integration` | Re-test integration connection |
+| `get_integration` | Get integration details (credentials are never returned) |
+| `create_integration` | Create an integration (WordPress, Webflow, Wix, GoHighLevel, Webhook), admins only |
+| `update_integration` | Update integration settings, admins only |
+| `delete_integration` | Delete an integration, admins only |
+| `reconnect_integration` | Re-test integration connection, admins only |
+
+When `update_integration` moves `wordpress_url` to another site, send `wordpress_application_password` in the same call; when it changes `webhook_url` on an integration with a bearer token, send `webhook_bearer_token`. Otherwise the update fails with `422 validation_failed`.
 
 ---
 
@@ -188,10 +198,32 @@ The remote server (`npm run start:http`, deployed from the `Dockerfile`) takes i
 |--------|---------|
 | Writing an article (accept suggestion or create briefing) | 5 |
 | Generating 10 new suggestions | 1 |
-| Rewriting an article | 3 |
-| Regenerating a picture | 1 |
 
-If your account doesn't have enough credits, the tool returns an error with the required and available credit counts.
+If your account doesn't have enough credits, the tool returns an error with the required and available credit counts. `get_account` shows the credits left.
+
+Rewriting an article and generating a new cover are free. Each article includes 2 rewrites and 2 new covers; one counts when it finishes. Starting another while one runs returns `409 conflict`, and once an article has used its 2 the tool returns `422 free_limit_reached`.
+
+---
+
+## Roles
+
+Only admins can manage integrations (`create_integration`, `update_integration`, `delete_integration`, `reconnect_integration`) and delete workspaces (`delete_workspace`). Members get `403 forbidden` there, and can still list integrations and publish to them.
+
+API keys count as admin, so the local server keeps every tool. On the remote server, an app connected by a member doesn't list the admin-only tools at all.
+
+---
+
+## Errors
+
+Tool errors start with the HTTP status and the API's error type, then the message, for example:
+
+```
+[422 free_limit_reached] You've used the 2 free rewrites for this article.
+[422 plan_limit_reached] Your Columnist plan includes 1 website. Upgrade your plan to add another one.
+[403 forbidden] Only company admins can do this. Ask an admin of your Balzac account.
+```
+
+See the [API documentation](https://developer.hirebalzac.ai) for every error type.
 
 ---
 

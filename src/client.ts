@@ -63,10 +63,13 @@ export class BalzacClient {
       const err = data as Record<string, unknown>;
       const error = (err.error || err) as Record<string, unknown>;
       const msg = (error.message as string) || `HTTP ${res.status}`;
+      // The type tells apart errors that share a status, such as 422
+      // validation_failed, free_limit_reached and plan_limit_reached.
+      const type = typeof error.type === 'string' && error.type ? ` ${error.type}` : '';
       // Validation errors carry the reasons in `details`; without them the
       // message is just "could not be created".
       const details = Array.isArray(error.details) && error.details.length ? ` ${error.details.join('; ')}.` : '';
-      throw new Error(`[${res.status}] ${msg}${details}`);
+      throw new Error(`[${res.status}${type}] ${msg}${details}`);
     }
 
     return { status: res.status, data };

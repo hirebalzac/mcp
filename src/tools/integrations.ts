@@ -4,6 +4,10 @@ import type { BalzacClient } from '../client.js';
 import { readOnly, additive, destructive } from '../annotations.js';
 import { ADMINS_ONLY, isAdmin, type ServerOptions } from '../options.js';
 
+// webhook_updates (get_integration shows it for webhooks).
+const WEBHOOK_UPDATES =
+  'Send an article.updated call when an article already published to the webhook changes in Balzac (with auto_publish on its own, otherwise on "Update on your site", a content refresh, or publishing again). Off, nothing is sent after the first article.published.';
+
 export function registerIntegrationTools(server: McpServer, client: BalzacClient, options: ServerOptions) {
   server.tool(
     'list_integrations',
@@ -22,7 +26,7 @@ export function registerIntegrationTools(server: McpServer, client: BalzacClient
 
   server.tool(
     'get_integration',
-    'Get full details of an integration including service-specific fields and connection status. Credentials (passwords, API keys and tokens) are write-only and never returned.',
+    'Get full details of an integration including service-specific fields and connection status. For a webhook, webhook_updates says whether it gets article.updated calls. Credentials (passwords, API keys and tokens) are write-only and never returned.',
     {
       workspace_id: z.string().describe('Workspace UUID'),
       integration_id: z.string().describe('Integration UUID'),
@@ -63,6 +67,7 @@ export function registerIntegrationTools(server: McpServer, client: BalzacClient
       gohighlevel_publication_status: z.string().optional().describe('[gohighlevel] Publication status: PUBLISHED or DRAFT'),
       webhook_url: z.string().optional().describe('[webhook] URL to receive POST requests'),
       webhook_bearer_token: z.string().optional().describe('[webhook] Bearer token for authentication'),
+      webhook_updates: z.boolean().optional().describe(`[webhook] ${WEBHOOK_UPDATES} Default true. Send false for an endpoint that creates a post on every call, or it gets a duplicate post for each update.`),
     },
     additive('Connect integration', { openWorld: true }),
     async ({ workspace_id, ...params }) => {
@@ -78,7 +83,7 @@ export function registerIntegrationTools(server: McpServer, client: BalzacClient
         'wix_api_key', 'wix_site_id', 'wix_member_id',
         'gohighlevel_api_token', 'gohighlevel_location_id', 'gohighlevel_blog_id',
         'gohighlevel_author_id', 'gohighlevel_category_id', 'gohighlevel_publication_status',
-        'webhook_url', 'webhook_bearer_token',
+        'webhook_url', 'webhook_bearer_token', 'webhook_updates',
       ];
       for (const f of serviceFields) {
         const v = (params as Record<string, unknown>)[f];
@@ -92,7 +97,7 @@ export function registerIntegrationTools(server: McpServer, client: BalzacClient
 
   server.tool(
     'update_integration',
-    `Update an integration. You can change the name, auto_publish, and service-specific credentials; send only what changes. A connection test runs automatically after update. Moving a URL needs its secret again in the same call: send wordpress_application_password when wordpress_url points to another site (a different scheme, host or port), and webhook_bearer_token when webhook_url changes on an integration that has one. Without it the update fails with 422 validation_failed. ${ADMINS_ONLY}`,
+    `Update an integration. You can change the name, auto_publish, webhook_updates, and service-specific credentials; send only what changes. A connection test runs automatically after update. Moving a URL needs its secret again in the same call: send wordpress_application_password when wordpress_url points to another site (a different scheme, host or port), and webhook_bearer_token when webhook_url changes on an integration that has one. Without it the update fails with 422 validation_failed. ${ADMINS_ONLY}`,
     {
       workspace_id: z.string().describe('Workspace UUID'),
       integration_id: z.string().describe('Integration UUID'),
@@ -116,6 +121,7 @@ export function registerIntegrationTools(server: McpServer, client: BalzacClient
       gohighlevel_publication_status: z.string().optional().describe('[gohighlevel] Publication status'),
       webhook_url: z.string().optional().describe('[webhook] URL. Changing it needs webhook_bearer_token in the same call when the integration has one.'),
       webhook_bearer_token: z.string().optional().describe('[webhook] Bearer token'),
+      webhook_updates: z.boolean().optional().describe(`[webhook] ${WEBHOOK_UPDATES} Webhooks connected before updates existed have it off: turn it on once the endpoint updates the post it created instead of creating another.`),
     },
     destructive('Update integration', { idempotent: true, openWorld: true }),
     async ({ workspace_id, integration_id, ...params }) => {

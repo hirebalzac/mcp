@@ -1,7 +1,8 @@
 // Remote MCP server (Streamable HTTP), deployed at https://mcp.hirebalzac.ai
 // so Balzac can be added as a connector in Claude, ChatGPT, and other clients
-// that speak MCP over HTTP. It serves the stdio server's tools, minus AI
-// image generation, and minus the admin-only tools for members.
+// that speak MCP over HTTP. It serves the stdio server's tools, minus the
+// options that ask for AI images (aiImages: false, see options.ts), and
+// minus the admin-only tools for members.
 //
 // Auth: clients send a bearer token, either an OAuth access token issued by
 // the Balzac app (the authorization server advertised below) or a `bz_` API
@@ -111,8 +112,10 @@ async function handleMcpRequest(req: Request, res: Response) {
   const label = message?.method === 'tools/call' ? `tools/call ${message.params?.name}` : message?.method;
   res.on('finish', () => console.log(`${req.method} ${req.path} ${label ?? '-'} ${res.statusCode} ${Date.now() - started}ms`));
 
-  // No AI image generation on the connector: the Claude directory doesn't
-  // accept it. Members don't get the admin-only tools.
+  // The connector's tools never ask for an AI image, since the Claude
+  // directory doesn't accept AI image generation. The cover written with a
+  // new article still follows the workspace's settings, which are AI by
+  // default (see options.ts). Members don't get the admin-only tools.
   const server = createServer(new BalzacClient(res.locals.token, API_URL), { aiImages: false, admin: res.locals.admin });
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
   res.on('close', () => {

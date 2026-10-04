@@ -8,12 +8,14 @@ const NEW_COVER_TERMS =
   'Generate a new main picture (cover) for a completed article. Free: each article includes 2 new covers on top of the one written with it, and get_article shows new_covers_left. Runs asynchronously: main_picture_url changes when it is ready. Fails with 409 conflict while a new cover is already being generated, and 422 free_limit_reached once its 2 free new covers are used.';
 
 // rewrite, publish and schedule answer with the whole article. Its
-// html_content runs to tens of KB, and right after a rewrite starts it is
-// still the old text, so these tools leave it out: get_article reads it.
+// html_content runs to tens of KB, published_html is a second copy of it
+// (with the AI disclosure), and schema_json_ld repeats the text of its FAQ.
+// Right after a rewrite starts all three are still the old version, so
+// these tools leave them out: get_article reads them.
 function withoutContent(data: unknown): unknown {
   const article = (data as { article?: unknown } | null)?.article;
   if (!article || typeof article !== 'object') return data;
-  const { html_content, ...rest } = article as Record<string, unknown>;
+  const { html_content, published_html, schema_json_ld, ...rest } = article as Record<string, unknown>;
   return { ...(data as Record<string, unknown>), article: rest };
 }
 
@@ -37,7 +39,7 @@ export function registerArticleTools(server: McpServer, client: BalzacClient, op
 
   server.tool(
     'get_article',
-    'Get full details of an article. When status is "done", includes the full HTML content, description, main picture URL, and metadata. Also includes rewriting (true while a rewrite runs), rewrites_left and new_covers_left (the free rewrites and new covers it has left, 0 to 2: check them before offering rewrite_article or regenerate_article_picture; one still running is not taken off yet), live_url (the public URL of its latest publication that reported one, or null) and publications (id, status, scheduled_for, url, integration_id), where a publication\'s url is filled in once the platform reports where the post went live.',
+    'Get full details of an article. When status is "done", includes the full HTML content (html_content, the article as written; published_html, as it goes to the site, ending with the workspace\'s AI disclosure when that setting is on; schema_json_ld, schema.org JSON-LD as a string), description, main picture URL, and metadata. Also includes rewriting (true while a rewrite runs), rewrites_left and new_covers_left (the free rewrites and new covers it has left, 0 to 2: check them before offering rewrite_article or regenerate_article_picture; one still running is not taken off yet), live_url (the public URL of its latest publication that reported one, or null) and publications (id, status, scheduled_for, url, integration_id), where a publication\'s url is filled in once the platform reports where the post went live.',
     {
       workspace_id: z.string().describe('Workspace UUID'),
       article_id: z.string().describe('Article UUID'),
@@ -156,7 +158,7 @@ export function registerArticleTools(server: McpServer, client: BalzacClient, op
 
   server.tool(
     'publish_article',
-    'Publish a completed article to a connected integration (WordPress, Webflow, Wix, GoHighLevel, or Webhook) right away. Returns the article (without its content) and its new publication. The post is sent in the background: published turns true once the platform accepts it, and the live URL (the publication\'s url and the article\'s live_url) appears later, once the platform reports it. Poll get_article to follow it and stop after a timeout; drafts and webhooks that answer without a URL never get one. An article already on that integration gets no new publication: the answer has publish.result "already_published", and the post there is updated if the article changed (message says when nothing was sent).',
+    'Publish a completed article to a connected integration (WordPress, Webflow, Wix, GoHighLevel, or Webhook) right away. Returns the article (without its content) and its new publication. The post is sent in the background: published turns true once the platform accepts it, and the live URL (the publication\'s url and the article\'s live_url) appears later, once the platform reports it. Poll get_article to follow it and stop after a timeout; drafts and webhooks that answer without a URL never get one. An article already on that integration gets no new publication: the answer has publish.result "already_published" and a message. The message says so when the integration can\'t take updates (GoHighLevel, or a webhook with webhook_updates off) and nothing was sent; otherwise the post there is updated only if the article changed since it was sent.',
     {
       workspace_id: z.string().describe('Workspace UUID'),
       article_id: z.string().describe('Article UUID'),
@@ -165,8 +167,9 @@ export function registerArticleTools(server: McpServer, client: BalzacClient, op
     additive('Publish article', { openWorld: true }),
     async ({ workspace_id, article_id, integration_id }) => {
       const res = await client.post(`/workspaces/${workspace_id}/articles/${article_id}/publish`, { integration_id });
-      // Already on that integration: no new publication, and publish.message
-      // says whether the post there gets updated or nothing was sent.
+      // Already on that integration: no new publication. publish.message
+      // says when nothing was sent because the integration can't take
+      // updates; otherwise the post is updated if the article changed.
       const already = (res.data as { publish?: { message?: unknown } } | null)?.publish;
       const message = already
         ? typeof already.message === 'string' ? already.message : 'Already published on this integration.'

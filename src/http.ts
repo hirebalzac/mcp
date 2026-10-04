@@ -112,10 +112,11 @@ async function handleMcpRequest(req: Request, res: Response) {
   const label = message?.method === 'tools/call' ? `tools/call ${message.params?.name}` : message?.method;
   res.on('finish', () => console.log(`${req.method} ${req.path} ${label ?? '-'} ${res.statusCode} ${Date.now() - started}ms`));
 
-  // The connector's tools never ask for an AI image, since the Claude
-  // directory doesn't accept AI image generation. The cover written with a
-  // new article still follows the workspace's settings, which are AI by
-  // default (see options.ts). Members don't get the admin-only tools.
+  // Content created through the connector never gets AI-generated images,
+  // since the Claude directory doesn't accept AI image generation: the tools
+  // never ask for one, and the API keeps AI out of the covers of everything
+  // made with an OAuth token (see options.ts). Members don't get the
+  // admin-only tools.
   const server = createServer(new BalzacClient(res.locals.token, API_URL), { aiImages: false, admin: res.locals.admin });
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
   res.on('close', () => {

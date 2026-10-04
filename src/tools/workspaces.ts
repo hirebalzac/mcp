@@ -4,9 +4,14 @@ import type { BalzacClient } from '../client.js';
 import { ADMINS_ONLY, isAdmin, picturesStyleParam, titleOverlayParam, type ServerOptions } from '../options.js';
 import { readOnly, additive, destructive } from '../annotations.js';
 
-// What the setup after create_workspace picks for the covers of new articles.
-const SETUP_COVERS =
-  'Unless it recommends stock photos, the covers it picks are AI-generated: a photorealistic style, or the title over an AI background.';
+// What the setup after create_workspace picks for the covers of new
+// articles. A workspace created with an OAuth token (the remote connector)
+// starts with ai_images=false, so the setup picks no AI style.
+function setupCovers(options: ServerOptions): string {
+  return options.aiImages
+    ? 'Unless it recommends stock photos, the covers it picks are AI-generated: a photorealistic style, or the title over an AI background (update_settings with ai_images: false keeps every cover free of AI images).'
+    : 'A workspace created through this connector starts with ai_images false, so its covers never use AI images: setup picks stock photos, or the title on a gradient of the brand color.';
+}
 
 export function registerWorkspaceTools(server: McpServer, client: BalzacClient, options: ServerOptions) {
   server.tool(
@@ -26,7 +31,7 @@ export function registerWorkspaceTools(server: McpServer, client: BalzacClient, 
 
   server.tool(
     'get_workspace',
-    'Get full details of a specific workspace including name, domain, status, language, description, target audience, theme, pictures style, cover image mode (title_based_featured_image, brand_color, title_font), article limits, and keyword usage limits (keywords_limit: used, max, remaining).',
+    'Get full details of a specific workspace including name, domain, status, language, description, target audience, theme, pictures style, cover image mode (title_based_featured_image, brand_color, title_font), ai_images (false: no AI-generated covers) and cover_mode (title, stock or ai), article limits, and keyword usage limits (keywords_limit: used, max, remaining).',
     {
       workspace_id: z.string().describe('Workspace UUID'),
     },
@@ -39,7 +44,7 @@ export function registerWorkspaceTools(server: McpServer, client: BalzacClient, 
 
   server.tool(
     'create_workspace',
-    `Create a new workspace from a website domain. Balzac analyzes the site to fill in its description, audience, keywords, and competitors; the workspace goes from "new" and "running" to "ready" or "imported" when setup completes, usually within a few minutes ("not_imported" if the site could not be analyzed). Once it understands the site, setup sets its own name, language, cover settings (pictures_style, title_based_featured_image, and the brand_color it finds on the site) and article limits (3 a week), replacing what was sent here: check get_settings once the workspace is ready and change them with update_settings. ${SETUP_COVERS} Costs no credits. Fails with 422 plan_limit_reached when the account is at its plan's website limit.`,
+    `Create a new workspace from a website domain. Balzac analyzes the site to fill in its description, audience, keywords, and competitors; the workspace goes from "new" and "running" to "ready" or "imported" when setup completes, usually within a few minutes ("not_imported" if the site could not be analyzed). Once it understands the site, setup sets its own name, language, cover settings (pictures_style, title_based_featured_image, and the brand_color it finds on the site) and article limits (3 a week), replacing what was sent here: check get_settings once the workspace is ready and change them with update_settings. ${setupCovers(options)} Costs no credits. Fails with 422 plan_limit_reached when the account is at its plan's website limit.`,
     {
       domain: z.string().describe('Website domain, e.g. example.com'),
       name: z.string().optional().describe('Workspace name (auto-detected if omitted)'),
@@ -47,8 +52,8 @@ export function registerWorkspaceTools(server: McpServer, client: BalzacClient, 
       auto_accept_keywords: z.boolean().optional().describe('Auto-accept discovered keywords (default true)'),
       auto_accept_suggestions: z.boolean().optional().describe('Auto-accept generated suggestions'),
       pictures_style: picturesStyleParam(options, 'Image style'),
-      // Turning title overlays on asks for AI backgrounds, and setup
-      // replaces whatever is sent here anyway.
+      // The remote server could only send false, and setup replaces
+      // whatever is sent here anyway.
       ...(options.aiImages ? { title_based_featured_image: titleOverlayParam(options) } : {}),
       brand_color: z.string().optional().describe('Brand color hex code for title overlay, e.g. #FF5500'),
       title_font: z.string().optional().describe('Font for title overlay: montserrat, playfair, poppins, lora, oswald'),
@@ -78,7 +83,7 @@ export function registerWorkspaceTools(server: McpServer, client: BalzacClient, 
     'update_workspace',
     options.aiImages
       ? 'Update a workspace name, description, language, pictures style, cover image mode (title overlay), or article limits.'
-      : 'Update a workspace name, description, language, pictures style (stock-photo), cover image mode (turning off title overlays, whose background is AI-generated), or article limits.',
+      : 'Update a workspace name, description, language, pictures style (stock-photo), cover image mode (turning off title overlays), or article limits.',
     {
       workspace_id: z.string().describe('Workspace UUID'),
       name: z.string().optional().describe('New name'),

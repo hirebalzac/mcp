@@ -100,12 +100,12 @@ official website: https://hirebalzac.ai
 
 | Tool | Parameters | Description |
 |------|-----------|-------------|
-| `list_articles` | `workspace_id`, `status?`, `published?`, `page?`, `per_page?` | List articles, with `live_url` |
-| `get_article` | `workspace_id`, `article_id` | Get article details + content, `live_url`, `publications[]` (with `url`) |
+| `list_articles` | `workspace_id`, `status?`, `published?`, `page?`, `per_page?` | List articles, with `live_url`, `rewrites_left`, `new_covers_left` |
+| `get_article` | `workspace_id`, `article_id` | Get article details + content, `live_url`, `publications[]` (with `url`), `rewrites_left`, `new_covers_left` |
 | `update_article` | `workspace_id`, `article_id`, `title?`, `slug?`, `description?`, `language?`, `tone_of_voice_id?` | Update metadata |
 | `delete_article` | `workspace_id`, `article_id` | Delete article |
 | `rewrite_article` | `workspace_id`, `article_id`, `length?`, `language?`, `tone_of_voice_id?`, `additional_instructions?` | Rewrite (free, 2 per article, async) |
-| `regenerate_article_picture` | `workspace_id`, `article_id`, `picture_mode?`, `pictures_style?`, `additional_instructions?` | New cover (free, 2 per article, async) |
+| `regenerate_article_picture` | `workspace_id`, `article_id`, `picture_mode?`, `pictures_style?`, `additional_instructions?` | New cover (free, 2 per article, async). Remote server: `picture_mode` (title or stock) and `additional_instructions?` (stock search words), no AI images |
 | `publish_article` | `workspace_id`, `article_id`, `integration_id` | Publish to integration; returns the article (without `html_content`) and its new publication |
 | `schedule_article` | `workspace_id`, `article_id`, `integration_id`, `scheduled_for` | Schedule publication; returns the article (without `html_content`) |
 | `export_article` | `workspace_id`, `article_id`, `format?` | Export as html/markdown/xml |
@@ -172,7 +172,7 @@ Credentials are write-only. When `update_integration` moves `wordpress_url` to a
 
 Insufficient credits returns an error with `required` and `available` counts. `get_account` shows the credits left.
 
-`rewrite_article` and `regenerate_article_picture` are free: 2 rewrites and 2 new covers per article. Another one while one runs returns `409 conflict`; once the 2 are used, `422 free_limit_reached`.
+`rewrite_article` and `regenerate_article_picture` are free: 2 rewrites and 2 new covers per article, and `get_article` shows `rewrites_left` and `new_covers_left`. Another one while one runs returns `409 conflict`; once the 2 are used, `422 free_limit_reached`. An unknown `pictures_style` returns `422 validation_failed` with the valid styles. On the remote server, a stock cover with no matching photo returns `422 no_stock_photo` (retry with search words in `additional_instructions`, or use `title`).
 
 ---
 

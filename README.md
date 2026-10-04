@@ -25,6 +25,8 @@ Clients that can't do OAuth can send an API key instead, as an `Authorization: B
 
 A connected app acts with the role of the person who approved it. Members don't get the admin-only tools (see [Roles](#roles)).
 
+The remote server offers no AI image generation. Its `regenerate_article_picture` asks the API for a cover with no AI image, in one of two modes: `title` (the article title on a gradient of the brand color) or `stock` (a stock photo, which never falls back to AI: when no photo matches, the tool returns `422 no_stock_photo` and nothing is counted, so try again with search words in `additional_instructions`, or use `title`). The cover written with a new article still follows the workspace's cover settings.
+
 The local server below works the same way, using an API key.
 
 ---
@@ -137,12 +139,12 @@ The remote server (`npm run start:http`, deployed from the `Dockerfile`) takes i
 
 | Tool | Description |
 |------|-------------|
-| `list_articles` | List articles (filter by status, published), with each one's `live_url` |
-| `get_article` | Get article details and content, `live_url` and publications |
+| `list_articles` | List articles (filter by status, published), with each one's `live_url`, `rewrites_left` and `new_covers_left` |
+| `get_article` | Get article details and content, `live_url`, publications, and the free `rewrites_left` and `new_covers_left` |
 | `update_article` | Update article metadata |
 | `delete_article` | Delete an article |
 | `rewrite_article` | Rewrite article content (free, 2 per article) |
-| `regenerate_article_picture` | Generate a new cover (free, 2 per article) |
+| `regenerate_article_picture` | Generate a new cover (free, 2 per article): title, stock photo or, on the local server, an AI style |
 | `publish_article` | Publish to an integration (the live URL shows up later in `get_article`) |
 | `schedule_article` | Schedule future publication |
 | `export_article` | Export as HTML, Markdown, or XML |
@@ -201,7 +203,7 @@ When `update_integration` moves `wordpress_url` to another site, send `wordpress
 
 If your account doesn't have enough credits, the tool returns an error with the required and available credit counts. `get_account` shows the credits left.
 
-Rewriting an article and generating a new cover are free. Each article includes 2 rewrites and 2 new covers; one counts when it finishes. Starting another while one runs returns `409 conflict`, and once an article has used its 2 the tool returns `422 free_limit_reached`.
+Rewriting an article and generating a new cover are free. Each article includes 2 rewrites and 2 new covers; one counts when it finishes, and `get_article` shows what is left (`rewrites_left`, `new_covers_left`). Starting another while one runs returns `409 conflict`, and once an article has used its 2 the tool returns `422 free_limit_reached`.
 
 ---
 
@@ -221,6 +223,7 @@ Tool errors start with the HTTP status and the API's error type, then the messag
 [422 free_limit_reached] You've used the 2 free rewrites for this article.
 [422 plan_limit_reached] Your Columnist plan includes 1 website. Upgrade your plan to add another one.
 [403 forbidden] Only company admins can do this. Ask an admin of your Balzac account.
+[422 no_stock_photo] No stock photo matches this article. Send a few search words in additional_instructions (for example "laptop on a desk"), or use picture_mode: title.
 ```
 
 See the [API documentation](https://developer.hirebalzac.ai) for every error type.

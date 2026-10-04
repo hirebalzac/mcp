@@ -130,8 +130,8 @@ official website: https://hirebalzac.ai
 
 | Tool | Parameters | Description |
 |------|-----------|-------------|
-| `get_settings` | `workspace_id` | Get workspace settings |
-| `update_settings` | `workspace_id`, `language?`, `article_length?`, `pictures_style?`, `title_based_featured_image?`, `brand_color?`, `title_font?`, `max_articles_per_period?`, `max_articles_period?`, `prefered_tone_of_voice_id?`, `auto_accept_suggestions?`, `use_title_cases_in_headings?`, `prefer_active_voice?`, `write_in_first_person?` | Update settings |
+| `get_settings` | `workspace_id` | Get workspace settings, including `ai_images` and `cover_mode` (title, stock or ai) |
+| `update_settings` | `workspace_id`, `language?`, `article_length?`, `pictures_style?`, `title_based_featured_image?`, `ai_images?` (remote server: `false` only), `brand_color?`, `title_font?`, `max_articles_per_period?`, `max_articles_period?`, `prefered_tone_of_voice_id?`, `auto_accept_suggestions?`, `use_title_cases_in_headings?`, `prefer_active_voice?`, `write_in_first_person?` | Update settings |
 
 ### Tones of Voice
 
@@ -172,7 +172,7 @@ Credentials are write-only. When `update_integration` moves `wordpress_url` to a
 
 Insufficient credits returns an error with `required` and `available` counts. `get_account` shows the credits left.
 
-`rewrite_article` and `regenerate_article_picture` are free: 2 rewrites and 2 new covers per article, and `get_article` shows `rewrites_left` and `new_covers_left`. Another one while one runs returns `409 conflict`; once the 2 are used, `422 free_limit_reached`. An unknown `pictures_style` returns `422 validation_failed` with the valid styles. On the remote server, a stock cover with no matching photo returns `422 no_stock_photo` (retry with search words in `additional_instructions`, or use `title`). The cover written with a new article follows the workspace's cover settings on both servers, and those use AI images by default: the setup after `create_workspace` picks an AI style or title covers over an AI background unless it recommends stock photos, and `stock-photo` falls back to AI when no photo matches. On the remote server, `title_based_featured_image` can only be set to `false`.
+`rewrite_article` and `regenerate_article_picture` are free: 2 rewrites and 2 new covers per article, and `get_article` shows `rewrites_left` and `new_covers_left`. Another one while one runs returns `409 conflict`; once the 2 are used, `422 free_limit_reached`. An unknown `pictures_style` returns `422 validation_failed` with the valid styles. On the remote server, a stock cover with no matching photo returns `422 no_stock_photo` (retry with search words in `additional_instructions`, or use `title`). With `ai_images: false` in the settings, no cover of the workspace uses AI images: title covers go on a gradient of the brand color and other covers are stock photos. On the remote server, content created through the connector never gets AI images (workspaces it creates start with `ai_images: false`, and its articles keep AI out of their covers), and `title_based_featured_image` and `ai_images` can only be set to `false` (turning `ai_images` on there returns `403 forbidden`, as does turning `auto_accept_suggestions` on in a workspace with `ai_images: true` unless the same call sends `ai_images: false`). On the local server, new articles' covers follow the workspace's settings, which use AI images by default.
 
 ---
 

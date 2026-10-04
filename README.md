@@ -25,11 +25,13 @@ Clients that can't do OAuth can send an API key instead, as an `Authorization: B
 
 A connected app acts with the role of the person who approved it. Members don't get the admin-only tools (see [Roles](#roles)).
 
-The remote server's tools never ask for an AI image: they offer no AI picture style and no `ai` mode, and `title_based_featured_image` (title covers over an AI background) can only be turned off. Its `regenerate_article_picture` asks the API for a cover with no AI image, in one of two modes: `title` (the article title on a gradient of the brand color) or `stock` (a stock photo, which never falls back to AI: when no photo matches, the tool returns `422 no_stock_photo` and nothing is counted, so try again with search words in `additional_instructions`, or use `title`).
+Content created through the remote connector never gets AI-generated images. Workspaces it creates start with `ai_images: false`, so the setup that follows `create_workspace` picks stock photos or title covers on a gradient of the brand color. The articles it writes (`create_briefing`, `accept_suggestion`), rewrites or gives a new cover keep AI out of all their covers, even in a workspace that allows AI images. Without AI images, a title cover is the article title on a gradient of the brand color, any other cover is a stock photo, and a first cover with no matching stock photo gets the title gradient instead.
 
-New articles are another matter. The cover written with each one (from `create_briefing`, `accept_suggestion`, or a suggestion accepted on its own by `auto_accept_suggestions` or the autopilot) follows the workspace's cover settings, and those use AI images by default: the setup that follows `create_workspace` picks a photorealistic AI style, or title covers over an AI background, unless it recommends stock photos, and it replaces any cover settings sent with `create_workspace`. Even `stock-photo` falls back to an AI image when no stock photo matches an article. Once a workspace is ready, `update_settings` with `pictures_style: stock-photo` and `title_based_featured_image: false` keeps most new covers to stock photos, and `regenerate_article_picture` can replace one that came out AI.
+The tools follow the same rule: they offer no AI picture style and no `ai` mode, and `title_based_featured_image` and `ai_images` can only be turned off. `update_settings` with `ai_images: false` keeps every cover of a workspace free of AI images, including articles written in the Balzac app or by autopilot; turning `ai_images` back on is done in the Balzac app (**Settings > Images**), and the API answers `403 forbidden` to a connector that tries. Turning `auto_accept_suggestions` on in a workspace whose `ai_images` is `true` also returns `403`, unless the same call sends `ai_images: false`. `regenerate_article_picture` has two modes: `title` or `stock` (a stock photo, which never falls back to AI: when no photo matches, the tool returns `422 no_stock_photo` and nothing is counted, so try again with search words in `additional_instructions`, or use `title`).
 
-The local server below works the same way, using an API key.
+The guarantee covers OAuth sign-ins, which is how Claude and ChatGPT connect. With a `bz_` API key, the remote server's tools still never ask for AI images, but the covers of new articles follow the workspace's `ai_images` setting.
+
+The local server below offers the same tools, plus AI picture styles and the `ai` cover mode, using an API key.
 
 ---
 
@@ -173,8 +175,8 @@ The remote server (`npm run start:http`, deployed from the `Dockerfile`) takes i
 
 | Tool | Description |
 |------|-------------|
-| `get_settings` | Get workspace settings |
-| `update_settings` | Update workspace settings |
+| `get_settings` | Get workspace settings, including `ai_images` and `cover_mode` |
+| `update_settings` | Update workspace settings, including `ai_images` (on the remote server, only `false`) |
 
 ### Tones of Voice
 

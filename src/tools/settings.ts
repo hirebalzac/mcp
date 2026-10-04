@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { BalzacClient } from '../client.js';
-import { picturesStyleParam, type ServerOptions } from '../options.js';
+import { picturesStyleParam, titleOverlayParam, type ServerOptions } from '../options.js';
 import { readOnly, destructive } from '../annotations.js';
 
 export function registerSettingsTools(server: McpServer, client: BalzacClient, options: ServerOptions) {
@@ -22,13 +22,13 @@ export function registerSettingsTools(server: McpServer, client: BalzacClient, o
     'update_settings',
     options.aiImages
       ? 'Update workspace settings: language, article length, pictures style, cover image mode (title overlay, stock photo, AI), tone, auto-accept suggestions, writing style preferences, and more.'
-      : 'Update workspace settings: language, article length, cover image mode (title overlay or stock photo), tone, auto-accept suggestions, writing style preferences, and more.',
+      : 'Update workspace settings: language, article length, cover image mode (stock-photo, or turning off title overlays, whose background is AI-generated), tone, auto-accept suggestions, writing style preferences, and more. The covers of new articles follow these settings, which may use AI images.',
     {
       workspace_id: z.string().describe('Workspace UUID'),
       language: z.string().optional().describe('Language code, e.g. en, fr'),
       article_length: z.string().optional().describe('Default article length: short, normal, long, extra_long'),
-      pictures_style: picturesStyleParam(options, 'Picture style: stock-photo, photorealistic, anime, comic-book, cyber-punk, pixel-art, low-poly, line-art, isometric, origami, watercolor, flat-illustration, 3d-clay'),
-      title_based_featured_image: z.boolean().optional().describe('Enable title overlay mode for cover images. When true, articles get a title overlay image instead of the pictures_style.'),
+      pictures_style: picturesStyleParam(options, 'Picture style'),
+      title_based_featured_image: titleOverlayParam(options),
       brand_color: z.string().optional().describe('Brand color hex code for title overlay images, e.g. #FF5500'),
       title_font: z.string().optional().describe('Font for title overlay images: montserrat, playfair, poppins, lora, oswald'),
       max_articles_per_period: z.number().optional().describe('Max articles per period'),

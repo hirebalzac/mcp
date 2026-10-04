@@ -25,6 +25,10 @@ Clients that can't do OAuth can send an API key instead, as an `Authorization: B
 
 A connected app acts with the role of the person who approved it. Members don't get the admin-only tools (see [Roles](#roles)).
 
+The remote server's tools never ask for an AI image: they offer no AI picture style and no `ai` mode, and `title_based_featured_image` (title covers over an AI background) can only be turned off. Its `regenerate_article_picture` asks the API for a cover with no AI image, in one of two modes: `title` (the article title on a gradient of the brand color) or `stock` (a stock photo, which never falls back to AI: when no photo matches, the tool returns `422 no_stock_photo` and nothing is counted, so try again with search words in `additional_instructions`, or use `title`).
+
+New articles are another matter. The cover written with each one (from `create_briefing`, `accept_suggestion`, or a suggestion accepted on its own by `auto_accept_suggestions` or the autopilot) follows the workspace's cover settings, and those use AI images by default: the setup that follows `create_workspace` picks a photorealistic AI style, or title covers over an AI background, unless it recommends stock photos, and it replaces any cover settings sent with `create_workspace`. Even `stock-photo` falls back to an AI image when no stock photo matches an article. Once a workspace is ready, `update_settings` with `pictures_style: stock-photo` and `title_based_featured_image: false` keeps most new covers to stock photos, and `regenerate_article_picture` can replace one that came out AI.
+
 The local server below works the same way, using an API key.
 
 ---
@@ -137,15 +141,17 @@ The remote server (`npm run start:http`, deployed from the `Dockerfile`) takes i
 
 | Tool | Description |
 |------|-------------|
-| `list_articles` | List articles (filter by status, published), with each one's `live_url` |
-| `get_article` | Get article details and content, `live_url` and publications |
+| `list_articles` | List articles (filter by status, published), with each one's `live_url`, `rewrites_left` and `new_covers_left` |
+| `get_article` | Get article details and content, `live_url`, publications, and the free `rewrites_left` and `new_covers_left` |
 | `update_article` | Update article metadata |
 | `delete_article` | Delete an article |
 | `rewrite_article` | Rewrite article content (free, 2 per article) |
-| `regenerate_article_picture` | Generate a new cover (free, 2 per article) |
+| `regenerate_article_picture` | Generate a new cover (free, 2 per article): title, stock photo or, on the local server, an AI style |
 | `publish_article` | Publish to an integration (the live URL shows up later in `get_article`) |
 | `schedule_article` | Schedule future publication |
 | `export_article` | Export as HTML, Markdown, or XML |
+
+`rewrite_article`, `publish_article` and `schedule_article` return the article without `html_content`, `published_html` and `schema_json_ld`: `get_article` has them. When the article is already on that integration, `publish_article` creates no new publication and passes on the API's message, which says when nothing was sent because the integration can't take updates (GoHighLevel, or a webhook with `webhook_updates` off).
 
 ### Competitors
 
@@ -190,6 +196,8 @@ The remote server (`npm run start:http`, deployed from the `Dockerfile`) takes i
 
 When `update_integration` moves `wordpress_url` to another site, send `wordpress_application_password` in the same call; when it changes `webhook_url` on an integration with a bearer token, send `webhook_bearer_token`. Otherwise the update fails with `422 validation_failed`.
 
+For webhooks, `webhook_updates` (on `create_integration` and `update_integration`) says whether the endpoint gets an `article.updated` call when an article already published there changes. New webhooks have it on; send `false` for an endpoint that creates a post on every call. Webhooks connected before updates existed have it off: turn it on once the endpoint updates the post it created. While it is off, `publish_article` on an article already there sends nothing and says so.
+
 ---
 
 ## Credit Costs
@@ -201,7 +209,7 @@ When `update_integration` moves `wordpress_url` to another site, send `wordpress
 
 If your account doesn't have enough credits, the tool returns an error with the required and available credit counts. `get_account` shows the credits left.
 
-Rewriting an article and generating a new cover are free. Each article includes 2 rewrites and 2 new covers; one counts when it finishes. Starting another while one runs returns `409 conflict`, and once an article has used its 2 the tool returns `422 free_limit_reached`.
+Rewriting an article and generating a new cover are free. Each article includes 2 rewrites and 2 new covers; one counts when it finishes, and `get_article` shows what is left (`rewrites_left`, `new_covers_left`). Starting another while one runs returns `409 conflict`, and once an article has used its 2 the tool returns `422 free_limit_reached`.
 
 ---
 
@@ -221,6 +229,7 @@ Tool errors start with the HTTP status and the API's error type, then the messag
 [422 free_limit_reached] You've used the 2 free rewrites for this article.
 [422 plan_limit_reached] Your Columnist plan includes 1 website. Upgrade your plan to add another one.
 [403 forbidden] Only company admins can do this. Ask an admin of your Balzac account.
+[422 no_stock_photo] No stock photo matches this article. Send a few search words in additional_instructions (for example "laptop on a desk"), or use picture_mode: title.
 ```
 
 See the [API documentation](https://developer.hirebalzac.ai) for every error type.

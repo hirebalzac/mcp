@@ -62,8 +62,8 @@ official website: https://hirebalzac.ai
 |------|-----------|-------------|
 | `list_workspaces` | `status?` (new, running, ready, imported, not_imported), `page?`, `per_page?` | List all workspaces |
 | `get_workspace` | `workspace_id` | Get workspace details |
-| `create_workspace` | `domain`, `name?`, `language?`, `auto_accept_keywords?`, `auto_accept_suggestions?`, `pictures_style?`, `title_based_featured_image?`, `brand_color?`, `title_font?`, `max_articles_per_period?`, `max_articles_period?` | Create workspace from domain (422 `plan_limit_reached` at the plan's website limit) |
-| `update_workspace` | `workspace_id`, `name?`, `description?`, `language?`, `pictures_style?`, `max_articles_per_period?`, `max_articles_period?` | Update workspace |
+| `create_workspace` | `domain`, `name?`, `language?`, `auto_accept_keywords?`, `auto_accept_suggestions?`, `pictures_style?`, `title_based_featured_image?` (local server only), `brand_color?`, `title_font?`, `max_articles_per_period?`, `max_articles_period?` | Create workspace from domain (422 `plan_limit_reached` at the plan's website limit). Setup then sets its own name, language, cover settings and article limits |
+| `update_workspace` | `workspace_id`, `name?`, `description?`, `language?`, `pictures_style?`, `title_based_featured_image?`, `brand_color?`, `title_font?`, `max_articles_per_period?`, `max_articles_period?` | Update workspace |
 | `delete_workspace` | `workspace_id` | Delete workspace (admins only) |
 
 ### Keywords
@@ -100,14 +100,14 @@ official website: https://hirebalzac.ai
 
 | Tool | Parameters | Description |
 |------|-----------|-------------|
-| `list_articles` | `workspace_id`, `status?`, `published?`, `page?`, `per_page?` | List articles, with `live_url` |
-| `get_article` | `workspace_id`, `article_id` | Get article details + content, `live_url`, `publications[]` (with `url`) |
+| `list_articles` | `workspace_id`, `status?`, `published?`, `page?`, `per_page?` | List articles, with `live_url`, `rewrites_left`, `new_covers_left` |
+| `get_article` | `workspace_id`, `article_id` | Get article details + content (`html_content`, `published_html`, `schema_json_ld`), `live_url`, `publications[]` (with `url`), `rewrites_left`, `new_covers_left` |
 | `update_article` | `workspace_id`, `article_id`, `title?`, `slug?`, `description?`, `language?`, `tone_of_voice_id?` | Update metadata |
 | `delete_article` | `workspace_id`, `article_id` | Delete article |
-| `rewrite_article` | `workspace_id`, `article_id`, `length?`, `language?`, `tone_of_voice_id?`, `additional_instructions?` | Rewrite (free, 2 per article, async) |
-| `regenerate_article_picture` | `workspace_id`, `article_id`, `picture_mode?`, `pictures_style?`, `additional_instructions?` | New cover (free, 2 per article, async) |
-| `publish_article` | `workspace_id`, `article_id`, `integration_id` | Publish to integration; returns the article (without `html_content`) and its new publication |
-| `schedule_article` | `workspace_id`, `article_id`, `integration_id`, `scheduled_for` | Schedule publication; returns the article (without `html_content`) |
+| `rewrite_article` | `workspace_id`, `article_id`, `length?`, `language?`, `tone_of_voice_id?`, `additional_instructions?` | Rewrite (free, 2 per article, async); returns the article without its content |
+| `regenerate_article_picture` | `workspace_id`, `article_id`, `picture_mode?`, `pictures_style?`, `additional_instructions?` | New cover (free, 2 per article, async). Remote server: `picture_mode` (title or stock) and `additional_instructions?` (stock search words), no AI images |
+| `publish_article` | `workspace_id`, `article_id`, `integration_id` | Publish to integration; returns the article (without `html_content`, `published_html`, `schema_json_ld`) and its new publication, or `publish.result` `already_published` with a message when the article is already there |
+| `schedule_article` | `workspace_id`, `article_id`, `integration_id`, `scheduled_for` | Schedule publication; returns the article (without `html_content`, `published_html`, `schema_json_ld`) |
 | `export_article` | `workspace_id`, `article_id`, `format?` | Export as html/markdown/xml |
 
 ### Competitors
@@ -131,7 +131,7 @@ official website: https://hirebalzac.ai
 | Tool | Parameters | Description |
 |------|-----------|-------------|
 | `get_settings` | `workspace_id` | Get workspace settings |
-| `update_settings` | `workspace_id`, `language?`, `article_length?`, `pictures_style?`, `max_articles_per_period?`, `max_articles_period?`, `prefered_tone_of_voice_id?`, `auto_accept_suggestions?`, `use_title_cases_in_headings?`, `prefer_active_voice?`, `write_in_first_person?` | Update settings |
+| `update_settings` | `workspace_id`, `language?`, `article_length?`, `pictures_style?`, `title_based_featured_image?`, `brand_color?`, `title_font?`, `max_articles_per_period?`, `max_articles_period?`, `prefered_tone_of_voice_id?`, `auto_accept_suggestions?`, `use_title_cases_in_headings?`, `prefer_active_voice?`, `write_in_first_person?` | Update settings |
 
 ### Tones of Voice
 
@@ -157,7 +157,7 @@ official website: https://hirebalzac.ai
 - **webflow**: `webflow_api_token`, `webflow_site_id`, `webflow_collection_id`, `webflow_publication_status`
 - **wix**: `wix_api_key`, `wix_site_id`, `wix_member_id`
 - **gohighlevel**: `gohighlevel_api_token`, `gohighlevel_location_id`, `gohighlevel_blog_id`, `gohighlevel_author_id`, `gohighlevel_category_id`, `gohighlevel_publication_status`
-- **webhook**: `webhook_url`, `webhook_bearer_token`
+- **webhook**: `webhook_url`, `webhook_bearer_token`, `webhook_updates` (send `article.updated` when a published article changes: on by default for new webhooks, off for those connected before updates existed; `false` for an endpoint that creates a post on every call)
 
 Credentials are write-only. When `update_integration` moves `wordpress_url` to another site, send `wordpress_application_password` in the same call; when it changes `webhook_url` on an integration with a bearer token, send `webhook_bearer_token`. Otherwise the update fails with `422 validation_failed`.
 
@@ -172,7 +172,7 @@ Credentials are write-only. When `update_integration` moves `wordpress_url` to a
 
 Insufficient credits returns an error with `required` and `available` counts. `get_account` shows the credits left.
 
-`rewrite_article` and `regenerate_article_picture` are free: 2 rewrites and 2 new covers per article. Another one while one runs returns `409 conflict`; once the 2 are used, `422 free_limit_reached`.
+`rewrite_article` and `regenerate_article_picture` are free: 2 rewrites and 2 new covers per article, and `get_article` shows `rewrites_left` and `new_covers_left`. Another one while one runs returns `409 conflict`; once the 2 are used, `422 free_limit_reached`. An unknown `pictures_style` returns `422 validation_failed` with the valid styles. On the remote server, a stock cover with no matching photo returns `422 no_stock_photo` (retry with search words in `additional_instructions`, or use `title`). The cover written with a new article follows the workspace's cover settings on both servers, and those use AI images by default: the setup after `create_workspace` picks an AI style or title covers over an AI background unless it recommends stock photos, and `stock-photo` falls back to AI when no photo matches. On the remote server, `title_based_featured_image` can only be set to `false`.
 
 ---
 

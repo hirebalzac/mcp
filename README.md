@@ -7,6 +7,8 @@
 
 The Balzac MCP server implements the [Model Context Protocol](https://modelcontextprotocol.io) so that AI agents like Claude Desktop, OpenClaw, Claude Code, and any MCP-compatible client can manage your entire content pipeline through structured tool calls.
 
+Not sure whether your site lets AI crawlers in? The free [AI crawler checker](https://hirebalzac.ai/free-seo-tools/ai-crawler-checker/) and the other [free SEO tools](https://hirebalzac.ai/free-seo-tools/) need no signup.
+
 ---
 
 ## Remote server (Claude, ChatGPT, and other connectors)

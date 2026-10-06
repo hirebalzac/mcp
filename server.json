@@ -1,0 +1,41 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.hirebalzac/mcp",
+  "title": "Balzac",
+  "description": "AI SEO agent: research keywords, write and publish blog articles. Free tier 3 articles.",
+  "repository": {
+    "url": "https://github.com/hirebalzac/mcp",
+    "source": "github"
+  },
+  "version": "1.5.1",
+  "websiteUrl": "https://developer.hirebalzac.ai",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "balzac-mcp",
+      "version": "1.5.1",
+      "runtimeHint": "npx",
+      "transport": { "type": "stdio" },
+      "environmentVariables": [
+        {
+          "name": "BALZAC_API_KEY",
+          "description": "Balzac API key (starts with bz_). Generate one in Balzac under Settings > API Keys.",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "BALZAC_API_URL",
+          "description": "API base URL override.",
+          "default": "https://api.hirebalzac.ai/v1"
+        }
+      ]
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.hirebalzac.ai"
+    }
+  ]
+}

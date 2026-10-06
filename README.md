@@ -35,6 +35,16 @@ The local server below offers the same tools, plus AI picture styles and the `ai
 
 ---
 
+## Registry listing
+
+This repository includes a `server.json` (and `mcpName` in `package.json`: `io.github.hirebalzac/mcp`) prepared for the [official MCP Registry](https://github.com/modelcontextprotocol/registry). Registry listing is not live until it has been published; check the registry for current status.
+
+Balzac is an AI SEO agent that researches keywords, then writes and publishes blog articles. The free tier includes 3 articles; paid plans start at $79/month.
+
+The local (npm, stdio) server reads `BALZAC_API_KEY` (required) and `BALZAC_API_URL` (optional). Never commit your key.
+
+---
+
 ## Quick Start
 
 ### 1. Get your API key

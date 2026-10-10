@@ -63,7 +63,7 @@ official website: https://hirebalzac.ai
 | `list_workspaces` | `status?` (new, running, ready, imported, not_imported), `page?`, `per_page?` | List all workspaces |
 | `get_workspace` | `workspace_id` | Get workspace details |
 | `create_workspace` | `domain`, `name?`, `language?`, `auto_accept_keywords?`, `auto_accept_suggestions?`, `pictures_style?`, `title_based_featured_image?` (local server only), `brand_color?`, `title_font?`, `max_articles_per_period?`, `max_articles_period?` | Create workspace from domain (422 `plan_limit_reached` at the plan's website limit). Setup then sets its own name, language, cover settings and article limits |
-| `update_workspace` | `workspace_id`, `name?`, `description?`, `language?`, `pictures_style?`, `title_based_featured_image?`, `brand_color?`, `title_font?`, `max_articles_per_period?`, `max_articles_period?` | Update workspace |
+| `update_workspace` | `workspace_id`, `name?`, `description?`, `target_audience?`, `pain_points?`, `features_benefits?`, `usage?`, `theme?`, `language?`, `pictures_style?`, `title_based_featured_image?`, `brand_color?`, `title_font?`, `max_articles_per_period?`, `max_articles_period?` | Update workspace |
 | `delete_workspace` | `workspace_id` | Delete workspace (admins only) |
 
 ### Keywords

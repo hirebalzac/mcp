@@ -82,12 +82,17 @@ export function registerWorkspaceTools(server: McpServer, client: BalzacClient, 
   server.tool(
     'update_workspace',
     options.aiImages
-      ? 'Update a workspace name, description, language, pictures style, cover image mode (title overlay), or article limits.'
-      : 'Update a workspace name, description, language, pictures style (stock-photo), cover image mode (turning off title overlays), or article limits.',
+      ? 'Update a workspace name, description, audience, pain points, features and benefits, usage, theme, language, pictures style, cover image mode (title overlay), or article limits.'
+      : 'Update a workspace name, description, audience, pain points, features and benefits, usage, theme, language, pictures style (stock-photo), cover image mode (turning off title overlays), or article limits.',
     {
       workspace_id: z.string().describe('Workspace UUID'),
       name: z.string().optional().describe('New name'),
       description: z.string().optional().describe('New description'),
+      target_audience: z.string().optional().describe('Who the articles are for'),
+      pain_points: z.string().optional().describe('Problems the audience has, one per line'),
+      features_benefits: z.string().optional().describe('Features and benefits to mention, one per line'),
+      usage: z.string().optional().describe('How customers use the product or site'),
+      theme: z.string().optional().describe('The site theme or niche'),
       language: z.string().optional().describe('Language code'),
       pictures_style: picturesStyleParam(options, 'Image style'),
       title_based_featured_image: titleOverlayParam(options),
@@ -101,6 +106,11 @@ export function registerWorkspaceTools(server: McpServer, client: BalzacClient, 
       const body: Record<string, unknown> = {};
       if (params.name) body.name = params.name;
       if (params.description) body.description = params.description;
+      if (params.target_audience) body.target_audience = params.target_audience;
+      if (params.pain_points) body.pain_points = params.pain_points;
+      if (params.features_benefits) body.features_benefits = params.features_benefits;
+      if (params.usage) body.usage = params.usage;
+      if (params.theme) body.theme = params.theme;
       if (params.language) body.language = params.language;
       if (params.pictures_style) body.pictures_style = params.pictures_style;
       if (params.title_based_featured_image !== undefined) body.title_based_featured_image = params.title_based_featured_image;

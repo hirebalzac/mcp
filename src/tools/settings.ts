@@ -8,8 +8,8 @@ export function registerSettingsTools(server: McpServer, client: BalzacClient, o
   server.tool(
     'get_settings',
     options.aiImages
-      ? 'Get workspace settings including language, article length, pictures style, cover image mode (title_based_featured_image, brand_color, title_font), ai_images (false: no cover of the workspace uses AI-generated images), cover_mode (what new covers get: title, stock or ai), writing preferences, and content limits.'
-      : 'Get workspace settings including language, article length, pictures style, cover image mode (title_based_featured_image, brand_color, title_font), ai_images (false: no cover of the workspace uses AI-generated images; workspaces created through this connector start with false), cover_mode (what new covers get: title, stock or ai), writing preferences, and content limits. Articles written through this connector never get AI images, whatever these settings say.',
+      ? 'Get workspace settings including language, article length, pictures style, cover image mode (title_based_featured_image, brand_color, title_font), ai_images (false: no cover of the workspace uses AI-generated images), cover_mode (what new covers get: title, stock or ai), writing_rules (the rules every article follows), and content limits.'
+      : 'Get workspace settings including language, article length, pictures style, cover image mode (title_based_featured_image, brand_color, title_font), ai_images (false: no cover of the workspace uses AI-generated images; workspaces created through this connector start with false), cover_mode (what new covers get: title, stock or ai), writing_rules (the rules every article follows), and content limits. Articles written through this connector never get AI images, whatever these settings say.',
     {
       workspace_id: z.string().describe('Workspace UUID'),
     },
@@ -23,8 +23,8 @@ export function registerSettingsTools(server: McpServer, client: BalzacClient, o
   server.tool(
     'update_settings',
     options.aiImages
-      ? 'Update workspace settings: language, article length, pictures style, cover image mode (title overlay, stock photo, AI), AI-generated cover images on or off (ai_images), tone, auto-accept suggestions, writing style preferences, and more.'
-      : 'Update workspace settings: language, article length, cover image mode (stock-photo, or turning off title overlays), ai_images: false (no AI-generated covers for the whole workspace), tone, auto-accept suggestions, writing style preferences, and more. Articles written through this connector never get AI images, whatever these settings say. ai_images can only be turned off here: turning it on fails with 403 forbidden (it is done in the Balzac app). Turning auto_accept_suggestions on in a workspace whose ai_images is true also fails with 403 forbidden, unless the same call sends ai_images: false.',
+      ? 'Update workspace settings: language, article length, pictures style, cover image mode (title overlay, stock photo, AI), AI-generated cover images on or off (ai_images), tone, writing rules (words to avoid, dashes, voice), auto-accept suggestions, and more.'
+      : 'Update workspace settings: language, article length, cover image mode (stock-photo, or turning off title overlays), ai_images: false (no AI-generated covers for the whole workspace), tone, writing rules (words to avoid, dashes, voice), auto-accept suggestions, and more. Articles written through this connector never get AI images, whatever these settings say. ai_images can only be turned off here: turning it on fails with 403 forbidden (it is done in the Balzac app). Turning auto_accept_suggestions on in a workspace whose ai_images is true also fails with 403 forbidden, unless the same call sends ai_images: false.',
     {
       workspace_id: z.string().describe('Workspace UUID'),
       language: z.string().optional().describe('Language code, e.g. en, fr'),
@@ -38,9 +38,10 @@ export function registerSettingsTools(server: McpServer, client: BalzacClient, o
       max_articles_period: z.string().optional().describe('Period: day, week, month'),
       prefered_tone_of_voice_id: z.string().optional().describe('Default tone of voice UUID'),
       auto_accept_suggestions: z.boolean().optional().describe('Automatically accept new suggestions'),
-      use_title_cases_in_headings: z.boolean().optional().describe('Use title case in article headings'),
-      prefer_active_voice: z.boolean().optional().describe('Prefer active voice in articles'),
-      write_in_first_person: z.boolean().optional().describe('Write articles in first person'),
+      writing_rules: z.string().max(2000).optional().describe('Writing rules Balzac follows in every article it plans, writes and rewrites for this workspace, up to 2,000 characters: words to avoid, no em dashes, how to address readers, facts about the business. An empty string clears them.'),
+      use_title_cases_in_headings: z.boolean().optional().describe('Legacy setting the writer no longer reads; put style rules in writing_rules'),
+      prefer_active_voice: z.boolean().optional().describe('Legacy setting the writer no longer reads; put style rules in writing_rules'),
+      write_in_first_person: z.boolean().optional().describe('Legacy setting the writer no longer reads; put style rules in writing_rules'),
     },
     destructive('Update settings', { idempotent: true }),
     async ({ workspace_id, ...params }) => {
